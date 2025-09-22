@@ -454,19 +454,24 @@ Return ONLY a JSON object:
         technicalSpecCount
       });
       
-      // Stricter requirements for resume detection
+      // Lenient requirements for resume detection - accept if any reasonable combination
       const hasContactInfo = hasEmail || hasPhone;
-      const hasWorkIndicators = hasExperience && (hasActionWords || hasDateRanges);
+      const hasWorkIndicators = hasExperience || hasActionWords || hasDateRanges;
       const hasEducationOrSkills = hasEducation || hasSkills;
-      const hasProperStructure = bulletCount >= 2 || hasResumePhrases;
-      const hasMinimumLength = wordCount >= 100 && wordCount <= 5000;
+      const hasProperStructure = bulletCount >= 1 || hasResumePhrases;
+      const hasReasonableLength = wordCount >= 50 && wordCount <= 10000;
       
-      // Require at least 3 of these 5 criteria
-      const criteriaCount = [hasContactInfo, hasWorkIndicators, hasEducationOrSkills, hasProperStructure, hasMinimumLength].filter(Boolean).length;
+      // Accept if we have contact + work OR education + reasonable length
+      // OR if it has explicit resume phrases
+      const isResume = hasResumePhrases || 
+                      (hasReasonableLength && (
+                        (hasContactInfo && (hasWorkIndicators || hasEducationOrSkills)) ||
+                        (hasWorkIndicators && hasEducationOrSkills) ||
+                        (hasContactInfo && hasProperStructure)
+                      ));
       
-      const isResume = criteriaCount >= 3;
-      
-      console.log(`Resume detection: ${criteriaCount}/5 criteria met, result: ${isResume}`);
+      console.log(`Resume detection: result: ${isResume}`);
+      console.log('Detection factors:', { hasContactInfo, hasWorkIndicators, hasEducationOrSkills, hasProperStructure, hasReasonableLength, hasResumePhrases });
       
       return isResume;
     }
