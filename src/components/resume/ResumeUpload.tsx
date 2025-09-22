@@ -91,6 +91,14 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
         throw new Error(data.error || 'Failed to parse resume');
       }
 
+      // Optional soft validation notice
+      if (data.validation && (!data.validation.aiIsResume && !data.validation.heuristicGuess)) {
+        toast({
+          title: "Proceeding with low-confidence detection",
+          description: "We could not confidently detect a resume, but we will continue as requested.",
+        });
+      }
+
       // Create resume in database
       const resumeTitle = `${file.name.split('.')[0]} Resume`;
       const newResume = await createResume(
