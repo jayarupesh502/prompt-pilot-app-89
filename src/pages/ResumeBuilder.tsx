@@ -152,14 +152,14 @@ const ResumeBuilder: React.FC = () => {
           {/* Step 1: Resume Upload */}
           {currentStep === 'upload' && (
             <div className="space-y-6">
-              <ResumeUpload />
+              <ResumeUpload onUploadSuccess={handleResumeUploaded} />
               
               {isGuest && (
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     <strong>Guest Mode:</strong> Your resume will be stored for 7 days. 
-                    <Button variant="link" className="p-0 h-auto font-normal underline ml-1">
+                    <Button variant="link" className="p-0 h-auto font-normal underline ml-1" onClick={() => window.location.href = '/auth'}>
                       Sign up for permanent storage
                     </Button>
                   </AlertDescription>

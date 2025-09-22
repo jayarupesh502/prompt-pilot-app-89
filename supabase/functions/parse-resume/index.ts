@@ -394,7 +394,7 @@ Return ONLY a JSON object:
       };
     }
 
-    // Heuristic resume detector as fallback when AI validation fails
+    // Enhanced heuristic resume detector with stricter validation
     function isLikelyResume(input: string): boolean {
       const lower = input.toLowerCase();
       const hasEmail = /[\w.+-]+@\w+\.[\w.-]+/.test(input);
@@ -403,15 +403,39 @@ Return ONLY a JSON object:
       const hasEducation = /(education|university|college|bachelor|master|degree|diploma|certification|school)/i.test(lower);
       const hasSkills = /(skills|technical|programming|software|tools|technologies|languages|frameworks)/i.test(lower);
       const hasResumePhrases = /(resume|cv|curriculum vitae)/i.test(lower);
-      const hasActionWords = /(developed|managed|created|implemented|designed|built|led|coordinated|achieved|improved)/i.test(lower);
+      const hasActionWords = /(developed|managed|created|implemented|designed|built|led|coordinated|achieved|improved|responsible for|worked on)/i.test(lower);
       const hasDateRanges = /(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s?\d{4}\s*[-–]\s*(present|\w+\.?\s?\d{4})|\b\d{4}\s*[-–]\s*(present|\d{4})/i.test(lower);
       const bulletCount = (input.match(/(^|\n)\s*[-•·]/g) || []).length;
       const wordCount = input.trim().split(/\s+/).length;
-      const disqualifiers = /(withholding|\bw-?4\b|internal revenue service|irs|tax|certificate|form\s?\d+|schedule\s?[a-z0-9]+|department of the treasury|invoice|purchase order|terms and conditions|privacy policy|cookie policy|table of contents|application form)/i;
-
-      // Hard disqualify common government/tax/invoice forms unless strong resume signals exist
-      if (disqualifiers.test(lower) && !(hasExperience && (hasEducation || hasSkills))) {
-        console.log('Heuristic disqualified by form-like keywords');
+      
+      // Strong disqualifiers for common non-resume documents
+      const strongDisqualifiers = /(withholding|\bw-?4\b|internal revenue service|irs|tax|certificate|form\s?\d+|schedule\s?[a-z0-9]+|department of the treasury|invoice|purchase order|terms and conditions|privacy policy|cookie policy|table of contents|application form|agreement|contract|license|manual|handbook|report|specification|requirements|documentation)/i;
+      
+      // Additional common file types that aren't resumes
+      const fileTypeDisqualifiers = /(readme|installation|tutorial|guide|how[\s-]?to|faq|frequently asked|about us|company overview|product description|service agreement|user manual)/i;
+      
+      // Check for too many form fields or technical specs
+      const formFieldCount = (input.match(/\b(field|input|checkbox|radio|dropdown|select|option|required|optional)\b/gi) || []).length;
+      const technicalSpecCount = (input.match(/\b(api|endpoint|method|parameter|response|request|json|xml|protocol|specification)\b/gi) || []).length;
+      
+      // Hard disqualify documents that are clearly not resumes
+      if (strongDisqualifiers.test(lower)) {
+        console.log('Heuristic disqualified by strong disqualifier keywords');
+        return false;
+      }
+      
+      if (fileTypeDisqualifiers.test(lower)) {
+        console.log('Heuristic disqualified by file type keywords');
+        return false;
+      }
+      
+      if (formFieldCount > 5) {
+        console.log('Heuristic disqualified by too many form fields');
+        return false;
+      }
+      
+      if (technicalSpecCount > 10 && !hasExperience) {
+        console.log('Heuristic disqualified by technical specification patterns');
         return false;
       }
       
@@ -425,15 +449,26 @@ Return ONLY a JSON object:
         hasActionWords,
         hasDateRanges,
         bulletCount,
-        wordCount
+        wordCount,
+        formFieldCount,
+        technicalSpecCount
       });
       
-      const contactOrResumeIndicator = hasEmail || hasPhone || hasResumePhrases;
-      const workContent = hasExperience || hasActionWords || hasDateRanges;
-      const educationOrSkills = hasEducation || hasSkills;
-      const structureSignals = bulletCount >= 2;
+      // Stricter requirements for resume detection
+      const hasContactInfo = hasEmail || hasPhone;
+      const hasWorkIndicators = hasExperience && (hasActionWords || hasDateRanges);
+      const hasEducationOrSkills = hasEducation || hasSkills;
+      const hasProperStructure = bulletCount >= 2 || hasResumePhrases;
+      const hasMinimumLength = wordCount >= 100 && wordCount <= 5000;
       
-      return contactOrResumeIndicator && workContent && educationOrSkills && (structureSignals || wordCount > 140);
+      // Require at least 3 of these 5 criteria
+      const criteriaCount = [hasContactInfo, hasWorkIndicators, hasEducationOrSkills, hasProperStructure, hasMinimumLength].filter(Boolean).length;
+      
+      const isResume = criteriaCount >= 3;
+      
+      console.log(`Resume detection: ${criteriaCount}/5 criteria met, result: ${isResume}`);
+      
+      return isResume;
     }
 
     // First validate if this is actually a resume

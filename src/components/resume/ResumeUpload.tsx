@@ -11,11 +11,13 @@ import { useResumeStore } from '@/stores/resumeStore';
 
 interface ResumeUploadProps {
   onUploadComplete?: (resumeData: any) => void;
+  onUploadSuccess?: (resumeData: any) => void; // Added for compatibility
   className?: string;
 }
 
 export const ResumeUpload: React.FC<ResumeUploadProps> = ({ 
   onUploadComplete,
+  onUploadSuccess,
   className = ''
 }) => {
   const { toast } = useToast();
@@ -76,7 +78,7 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
         // Handle specific validation errors for non-resume files
         if (data.reason && data.suggestion) {
           toast({
-            title: "Not a resume file",
+            title: "Invalid file detected",
             description: `${data.reason} ${data.suggestion}`,
             variant: "destructive"
           });
@@ -105,7 +107,9 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
         description: `Parsed ${file.name} with ATS score of ${data.atsScore}/100`,
       });
 
+      // Call both callbacks for compatibility
       onUploadComplete?.(newResume);
+      onUploadSuccess?.(newResume);
 
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -117,7 +121,7 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
     } finally {
       setIsUploading(false);
     }
-  }, [toast, isGuest, guestSessionId, createResume, onUploadComplete]);
+  }, [toast, isGuest, guestSessionId, createResume, onUploadComplete, onUploadSuccess]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
