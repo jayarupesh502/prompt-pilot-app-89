@@ -67,24 +67,37 @@ const ResumeBuilder: React.FC = () => {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          {!currentResume ? (
-            <ResumeUpload />
-          ) : (
+      <div className="space-y-6">
+        {!currentResume ? (
+          <ResumeUpload />
+        ) : (
+          <>
+            <div className="bg-card rounded-lg border p-6">
+              <h3 className="text-lg font-semibold mb-2">Resume Uploaded Successfully!</h3>
+              <p className="text-muted-foreground mb-4">
+                Your resume has been parsed. Add a job description below to get a job-specific ATS score and tailoring suggestions.
+              </p>
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Base ATS Score: {currentResume.atsScore || 0}/100</span>
+                <span>Upload another resume to start over</span>
+              </div>
+            </div>
+            
             <JobDescriptionInput onAnalysisComplete={setCurrentJob} />
-          )}
-          
-          {currentJob && (
-            <JobAnalysisResults jobData={currentJob} />
-          )}
-          
-          {currentResume && currentJob && (
-            <TailoringInterface 
-              resume={currentResume} 
-              jobDescription={currentJob}
-            />
-          )}
-        </div>
+          </>
+        )}
+        
+        {currentJob && (
+          <JobAnalysisResults jobData={currentJob} />
+        )}
+        
+        {currentResume && currentJob && (
+          <TailoringInterface 
+            resume={currentResume} 
+            jobDescription={currentJob}
+          />
+        )}
+      </div>
         
         <div>
           {currentResume && (
