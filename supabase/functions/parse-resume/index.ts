@@ -41,7 +41,7 @@ serve(async (req) => {
       const uint8Array = new Uint8Array(arrayBuffer);
       
       // Simple PDF text extraction (this is a simplified approach)
-      const decoder = new TextDecoder();
+      const decoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false });
       text = decoder.decode(uint8Array);
       
       // Extract readable text using regex patterns for PDF
@@ -56,6 +56,9 @@ serve(async (req) => {
     } else {
       text = await file.text();
     }
+
+    // Sanitize text to remove problematic unicode sequences
+    text = sanitizeText(text);
 
     console.log('Extracted text length:', text.length);
 
@@ -243,7 +246,7 @@ Return only the JSON, no other text.`
     // Store resume bullets in memory layer for future retrieval
     if (bullets.length > 0) {
       const bulletInserts = bullets.map(bullet => ({
-        text: bullet,
+        text: sanitizeText(bullet),
         user_id: isGuest ? null : undefined,
         guest_session_id: isGuest ? guestSessionId : null,
         is_guest: isGuest,
@@ -305,4 +308,19 @@ function extractSkillsFromBullet(bullet: string, allSkills: string[]): string[] 
   });
   
   return foundSkills;
+}
+
+function sanitizeText(text: string): string {
+  // Remove null bytes and other problematic control characters
+  return text
+    // Remove null bytes and other problematic unicode sequences
+    .replace(/\u0000/g, '')
+    .replace(/[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g, '')
+    // Replace problematic unicode escape sequences
+    .replace(/\\u0000/g, '')
+    // Remove binary data patterns
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+    // Clean up whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
 }
