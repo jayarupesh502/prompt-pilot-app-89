@@ -60,36 +60,36 @@ const Index = () => {
   return (
     <div className="space-y-32 pb-20">
       {/* Sophisticated Hero Section */}
-      <section className="relative text-center space-y-12 py-32 overflow-hidden">
-        {/* Elegant background pattern */}
+      <section className="relative text-center space-y-8 py-16 overflow-hidden">
+        {/* Compact background pattern */}
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl"></div>
-          <div className="absolute top-32 right-0 w-80 h-80 bg-gradient-to-bl from-accent/20 to-transparent rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-1/2 w-64 h-64 bg-gradient-to-t from-primary-variant/20 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute top-0 left-0 w-48 h-48 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute top-16 right-0 w-40 h-40 bg-gradient-to-bl from-accent/20 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-1/2 w-32 h-32 bg-gradient-to-t from-primary-variant/20 to-transparent rounded-full blur-3xl"></div>
         </div>
         
-        {/* Floating decorative elements */}
-        <div className="absolute top-20 left-16 w-24 h-24 bg-accent/10 rounded-full blur-2xl animate-float"></div>
-        <div className="absolute top-48 right-32 w-20 h-20 bg-primary/10 rounded-full blur-xl animate-float" style={{animationDelay: '1.5s'}}></div>
-        <div className="absolute bottom-32 left-1/3 w-16 h-16 bg-primary-variant/10 rounded-full blur-xl animate-float" style={{animationDelay: '3s'}}></div>
+        {/* Smaller floating elements */}
+        <div className="absolute top-10 left-8 w-12 h-12 bg-accent/10 rounded-full blur-2xl animate-float"></div>
+        <div className="absolute top-24 right-16 w-10 h-10 bg-primary/10 rounded-full blur-xl animate-float" style={{animationDelay: '1.5s'}}></div>
+        <div className="absolute bottom-16 left-1/3 w-8 h-8 bg-primary-variant/10 rounded-full blur-xl animate-float" style={{animationDelay: '3s'}}></div>
         
-        <div className="relative z-10 space-y-8 animate-fade-in">
-          <Badge variant="outline" className="px-8 py-4 text-lg border-accent/30 bg-accent/10 hover:bg-accent/20 transition-all duration-500 hover:scale-105 font-medium">
-            <Sparkles className="w-6 h-6 mr-3 text-accent" />
-            AI-Powered Resume Optimization Platform
+        <div className="relative z-10 space-y-6 animate-fade-in">
+          <Badge variant="outline" className="px-4 py-2 text-sm border-accent/30 bg-accent/10 hover:bg-accent/20 transition-all duration-500 hover:scale-105 font-medium">
+            <Sparkles className="w-4 h-4 mr-2 text-accent" />
+            AI-Powered Resume Optimization
           </Badge>
           
-          <div className="space-y-6">
-            <h1 className="font-display font-bold leading-[0.9] tracking-tight">
+          <div className="space-y-4">
+            <h1 className="font-display font-bold leading-tight tracking-tight text-3xl md:text-4xl lg:text-5xl">
               Transform Your Career with{' '}
-              <span className="hero-gradient block mt-2">
+              <span className="hero-gradient block mt-1">
                 Intelligent Resume Optimization
               </span>
             </h1>
             
-            <p className="text-2xl md:text-3xl text-foreground/80 max-w-5xl mx-auto leading-relaxed font-light">
-              Our advanced AI analyzes job requirements and crafts personalized resumes that pass ATS filters 
-              and capture recruiter attention—dramatically increasing your interview success rate.
+            <p className="text-base md:text-lg text-foreground/80 max-w-3xl mx-auto leading-relaxed">
+              Our AI analyzes job requirements and crafts personalized resumes that pass ATS filters 
+              and capture recruiter attention.
             </p>
           </div>
         </div>

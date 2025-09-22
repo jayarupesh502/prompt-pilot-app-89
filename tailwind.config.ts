@@ -101,6 +101,7 @@ export default {
         "slide-up": "slide-up 0.5s ease-out",
         "float": "float 3s ease-in-out infinite",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "floating-shapes": "floating-shapes 8s ease-in-out infinite",
       },
       fontFamily: {
         'display': ['Playfair Display', 'Georgia', 'serif'],
