@@ -43,12 +43,7 @@ const Templates: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTemplates((data || []).map(template => ({
-        ...template,
-        category: template.industry,
-        template_data: template.template_content,
-        is_premium: !template.is_public
-      })));
+      setTemplates(data || []);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast({
@@ -66,7 +61,7 @@ const Templates: React.FC = () => {
       const resumeTitle = `${template.name} Resume`;
       const newResume = await createResume(
         resumeTitle,
-        template.template_data,
+        template.template_content,
         isGuest,
         guestSessionId
       );
@@ -89,12 +84,12 @@ const Templates: React.FC = () => {
   };
 
   const getCategories = () => {
-    const categories = [...new Set(templates.map(t => t.category))];
+    const categories = [...new Set(templates.map(t => t.industry))];
     return ['All', ...categories];
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category.toLowerCase()) {
+  const getCategoryIcon = (industry: string) => {
+    switch (industry.toLowerCase()) {
       case 'technology':
         return <Code className="w-4 h-4" />;
       case 'marketing':
@@ -118,12 +113,12 @@ const Templates: React.FC = () => {
 
   const getTemplatesByCategory = (category: string) => {
     if (category === 'All') return filteredTemplates;
-    return filteredTemplates.filter(t => t.category === category);
+    return filteredTemplates.filter(t => t.industry === category);
   };
 
   const TemplateCard = ({ template }: { template: Template }) => (
     <Card className="group hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-      {template.is_premium && (
+      {!template.is_public && (
         <Badge className="absolute top-3 right-3 z-10 bg-gradient-to-r from-amber-500 to-orange-500">
           <Star className="w-3 h-3 mr-1" />
           Pro
@@ -133,12 +128,12 @@ const Templates: React.FC = () => {
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-primary/10 rounded-lg">
-            {getCategoryIcon(template.category)}
+            {getCategoryIcon(template.industry)}
           </div>
           <div className="flex-1">
             <CardTitle className="text-lg">{template.name}</CardTitle>
             <Badge variant="outline" className="text-xs mt-1">
-              {template.category}
+              {template.industry}
             </Badge>
           </div>
         </div>
@@ -169,7 +164,7 @@ const Templates: React.FC = () => {
               {selectedTemplate && (
                 <div className="mt-4">
                   <ResumePreview 
-                    resume={selectedTemplate.template_data}
+                    resume={selectedTemplate.template_content}
                     atsScore={85}
                   />
                 </div>
