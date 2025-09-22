@@ -7,22 +7,22 @@
 @layer base {
   :root {
     /* Sophisticated color palette */
-    --primary: 217 19% 27%; /* Rich Navy */
-    --primary-variant: 217 32% 35%; /* Elegant Blue */
-    --primary-glow: 217 91% 70%; /* Bright Accent */
+    --primary: 0 0% 8%; /* Rich Black */
+    --primary-variant: 0 0% 15%; /* Dark Gray */
+    --primary-glow: 142 76% 36%; /* Emerald Green */
     --primary-foreground: 0 0% 98%;
     
     --secondary: 215 25% 15%; /* Deep Charcoal */
     --secondary-foreground: 0 0% 98%;
     
-    --accent: 31 77% 52%; /* Warm Gold */
-    --accent-variant: 31 77% 62%; /* Light Gold */
-    --accent-foreground: 0 0% 10%;
+    --accent: 142 76% 36%; /* Emerald Green */
+    --accent-variant: 142 69% 42%; /* Light Green */
+    --accent-foreground: 0 0% 98%;
     
     --muted: 217 20% 95%; /* Sophisticated Gray */
     --muted-foreground: 215 16% 47%;
     
-    --background: 220 27% 98%; /* Warm Off-White */
+    --background: 214 32% 91%; /* Light Blue */
     --foreground: 217 19% 12%;
     
     --card: 0 0% 100%;
@@ -39,12 +39,12 @@
     --destructive-foreground: 0 0% 98%;
     
     /* Luxury gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(217 19% 27%) 0%, hsl(217 32% 35%) 25%, hsl(31 77% 52%) 75%, hsl(31 77% 62%) 100%);
-    --gradient-sophisticated: linear-gradient(145deg, hsl(217 20% 98%) 0%, hsl(217 20% 95%) 50%, hsl(220 27% 96%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(217 20% 98%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(31 77% 52%), hsl(31 77% 62%));
-    --gradient-primary: linear-gradient(135deg, hsl(217 19% 27%), hsl(217 32% 35%));
-    --gradient-luxury: radial-gradient(ellipse at top, hsl(217 20% 98%) 0%, hsl(220 27% 96%) 50%, hsl(217 20% 94%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(0 0% 15%) 25%, hsl(142 76% 36%) 75%, hsl(142 69% 42%) 100%);
+    --gradient-sophisticated: linear-gradient(145deg, hsl(214 32% 93%) 0%, hsl(214 32% 91%) 50%, hsl(214 32% 89%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(214 32% 96%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 69% 42%));
+    --gradient-primary: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 15%));
+    --gradient-luxury: radial-gradient(ellipse at top, hsl(214 32% 93%) 0%, hsl(214 32% 91%) 50%, hsl(214 32% 89%) 100%);
     
     /* Premium shadows */
     --shadow-sm: 0 1px 3px 0 hsl(217 19% 27% / 0.1);
@@ -124,6 +124,7 @@
   
   html {
     font-size: 16px;
+    zoom: 0.85;
   }
   
   body {
