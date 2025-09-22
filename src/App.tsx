@@ -36,11 +36,21 @@ const AppContent = () => {
       <div className="min-h-screen flex w-full bg-background">
         {/* Mobile header with hamburger */}
         {isMobile && (
-          <header className="fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-4 bg-background/95 backdrop-blur border-b z-50">
-            <SidebarTrigger className="md:hidden p-2 hover:bg-accent rounded-md" />
-            <div className="text-lg font-semibold">PulpResume</div>
+          <header className="fixed top-0 left-0 right-0 h-14 flex items-center justify-between px-4 bg-background/95 backdrop-blur-sm border-b z-50">
+            <SidebarTrigger className="mobile-nav-trigger md:hidden" />
+            <div className="text-lg font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              PulpResume
+            </div>
             <div></div> {/* Spacer for centering */}
           </header>
+        )}
+        
+        {/* Mobile backdrop overlay */}
+        {isMobile && (
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+            style={{ display: 'var(--sidebar-open-mobile, none)' }}
+          />
         )}
         
         {/* Sidebar */}

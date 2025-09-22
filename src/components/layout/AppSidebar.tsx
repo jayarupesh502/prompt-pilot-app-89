@@ -64,8 +64,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className }) => {
   // Guest user view
   if (isGuest) {
     return (
-      <Sidebar className={className}>
-        <SidebarHeader className="p-4">
+      <Sidebar className={`bg-sidebar border-sidebar-border ${className}`}>
+        <SidebarHeader className="p-4 bg-sidebar-header border-b border-sidebar-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <FileText className="w-6 h-6 text-primary" />
@@ -129,8 +129,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className }) => {
 
   // Authenticated user view
   return (
-    <Sidebar className={className}>
-      <SidebarHeader className="p-4">
+    <Sidebar className={`bg-sidebar border-sidebar-border ${className}`}>
+      <SidebarHeader className="p-4 bg-sidebar-header border-b border-sidebar-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <FileText className="w-6 h-6 text-primary" />

@@ -54,6 +54,13 @@
     --font-mono: 'JetBrains Mono', monospace;
     --font-resume: 'Times New Roman', serif;
     
+    /* Sidebar colors */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 222 84% 5%;
+    --sidebar-header: 0 0% 100%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 221 83% 53%;
+
     --radius: 0.75rem;
   }
 
@@ -85,6 +92,13 @@
     --border: 217 32% 17%;
     --input: 217 32% 17%;
     --ring: 221 83% 63%;
+    
+    /* Sidebar colors for dark mode */
+    --sidebar: 217 32% 17%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-header: 217 32% 17%;
+    --sidebar-border: 217 32% 27%;
+    --sidebar-ring: 221 83% 63%;
   }
 }
 
@@ -150,6 +164,17 @@
   .guest-watermark {
     @apply absolute bottom-4 right-4 text-xs text-muted-foreground/50 pointer-events-none;
     font-family: var(--font-mono);
+  }
+  
+  /* Mobile sidebar backdrop */
+  .sidebar-backdrop {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40;
+    transition: opacity 0.2s ease-in-out;
+  }
+  
+  /* Improved mobile navigation */
+  .mobile-nav-trigger {
+    @apply p-3 hover:bg-accent/20 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50;
   }
 }
 
