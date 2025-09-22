@@ -59,19 +59,26 @@ serve(async (req) => {
 
     console.log('Extracted text length:', text.length);
 
-    // Use GPT-4o-mini to parse and structure the resume
-    const parseResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a resume parser. Extract structured data from resume text and return ONLY valid JSON in this exact format:
+    // Trim extremely long inputs to keep token usage under control
+    if (text.length > 20000) {
+      text = text.slice(0, 20000);
+    }
+
+    // Helper: call OpenAI with retries
+    async function callOpenAIWithRetry(inputText: string, retries = 3): Promise<any | null> {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are a resume parser. Extract structured data from resume text and return ONLY valid JSON in this exact format:
 {
   "profile": {
     "name": "string",
@@ -110,44 +117,128 @@ serve(async (req) => {
     }
   ]
 }
-
-Calculate impact scores for each bullet point (0-10) based on:
-- Metrics present (+3)
-- Strong action verbs (+2) 
-- Technical depth (+2)
-- Recency (+1)
 Return only the JSON, no other text.`
-          },
-          { role: 'user', content: `Parse this resume text:\n\n${text}` }
-        ],
-        max_tokens: 2000,
-        temperature: 0.3
-      }),
-    });
+              },
+              { role: 'user', content: `Parse this resume text (truncated):\n\n${inputText}` }
+            ],
+            max_tokens: 1500,
+            temperature: 0.2
+          }),
+        });
 
-    if (!parseResponse.ok) {
-      throw new Error(`OpenAI API error: ${parseResponse.statusText}`);
+        if (res.ok) {
+          const data = await res.json();
+          try {
+            return JSON.parse(data.choices[0].message.content);
+          } catch (_e) {
+            return null;
+          }
+        }
+
+        // If rate limited, exponential backoff then retry
+        if (res.status === 429 || res.status >= 500) {
+          const delay = 500 * Math.pow(3, attempt - 1);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+
+        // Non-retryable error
+        console.error('OpenAI error status:', res.status, await res.text());
+        return null;
+      }
+      return null;
     }
 
-    const parseData = await parseResponse.json();
-    const parsedContent = JSON.parse(parseData.choices[0].message.content);
+    // Heuristic parser fallback
+    function heuristicParse(input: string) {
+      const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean).slice(0, 1500);
+      const textLower = input.toLowerCase();
+      const section = (name: string) => new RegExp(`(^|\n)\s*${name}\s*:?.*$`, 'i');
 
-    console.log('Parsed resume structure:', JSON.stringify(parsedContent, null, 2));
+      const splitBy = (marker: RegExp) => {
+        const idx = lines.findIndex(l => marker.test(l));
+        return idx >= 0 ? lines.slice(idx + 1) : lines;
+      };
 
-    // Calculate overall ATS score
-    let atsScore = 0;
-    const bullets = [
-      ...(parsedContent.experience?.flatMap(exp => exp.bullets || []) || []),
-      ...(parsedContent.projects?.flatMap(proj => proj.bullets || []) || [])
+      const expMarkers = [/experience/, /work history/, /employment/];
+      const eduMarkers = [/education/, /academic/];
+      const skillsMarkers = [/skills/, /technical skills/, /technologies/];
+      const projectsMarkers = [/projects?,?/];
+
+      const bulletsFrom = (arr: string[]) => arr.filter(l => /^[-•·]/.test(l) || l.length > 40).slice(0, 10);
+
+      const experience = (() => {
+        const marker = expMarkers.find(m => m.test(textLower));
+        const arr = marker ? splitBy(section(marker.source.replace(/\\/g, ''))) : lines;
+        const bullets = bulletsFrom(arr);
+        return bullets.length
+          ? [{ company: '', title: '', location: '', startDate: '', endDate: '', bullets, skills: [] }]
+          : [];
+      })();
+
+      const education = (() => {
+        const marker = eduMarkers.find(m => m.test(textLower));
+        const arr = marker ? splitBy(section(marker.source.replace(/\\/g, ''))) : [];
+        const item = arr.find(l => /(university|college|bachelor|master|degree)/i.test(l));
+        return item ? [{ institution: item, degree: '', field: '', graduationDate: '', gpa: '' }] : [];
+      })();
+
+      const skills = (() => {
+        const marker = skillsMarkers.find(m => m.test(textLower));
+        const arr = marker ? splitBy(section(marker.source.replace(/\\/g, ''))) : [];
+        const joined = arr.slice(0, 10).join(', ');
+        return joined.split(/,|\u2022|\|/).map(s => s.trim()).filter(s => s && s.length < 30).slice(0, 30);
+      })();
+
+      const projects = (() => {
+        const marker = projectsMarkers.find(m => m.test(textLower));
+        const arr = marker ? splitBy(section(marker.source.replace(/\\/g, ''))) : [];
+        const bullets = bulletsFrom(arr);
+        return bullets.length
+          ? [{ name: '', description: '', technologies: [], bullets }]
+          : [];
+      })();
+
+      // Basic profile extraction
+      const email = (input.match(/[\w.+-]+@\w+\.[\w.-]+/g) || [''])[0];
+      const phone = (input.match(/\+?\d[\d\s().-]{7,}/g) || [''])[0];
+
+      return {
+        profile: { name: '', email, phone, location: '', summary: '' },
+        experience,
+        education,
+        skills,
+        projects,
+      };
+    }
+
+    // Try OpenAI first, then fallback
+    let parsedContent = await callOpenAIWithRetry(text);
+    if (!parsedContent) {
+      console.log('Falling back to heuristic parser');
+      parsedContent = heuristicParse(text);
+    }
+
+    console.log('Parsed resume structure (final):', JSON.stringify(parsedContent).slice(0, 500));
+
+    // Calculate overall ATS score (heuristic if no bullets)
+    let bullets: string[] = [
+      ...(parsedContent.experience?.flatMap((exp: any) => exp.bullets || []) || []),
+      ...(parsedContent.projects?.flatMap((proj: any) => proj.bullets || []) || [])
     ];
-    
-    bullets.forEach(bullet => {
-      if (/\d+/.test(bullet)) atsScore += 3; // Has metrics
-      if (/^(Led|Managed|Developed|Created|Implemented|Optimized|Increased|Reduced)/i.test(bullet)) atsScore += 2; // Strong action verbs
-      if (bullet.length > 50) atsScore += 1; // Detailed
-    });
 
-    atsScore = Math.min(100, Math.round(atsScore / bullets.length * 20));
+    if (bullets.length === 0) {
+      bullets = text.split(/\n|\.|;/).map(s => s.trim()).filter(s => s.length > 30).slice(0, 10);
+    }
+
+    let atsScore = 0;
+    bullets.forEach(bullet => {
+      if (/\d+/.test(bullet)) atsScore += 3;
+      if (/^(Led|Managed|Developed|Created|Implemented|Optimized|Increased|Reduced)/i.test(bullet)) atsScore += 2;
+      if (bullet.length > 50) atsScore += 1;
+      if (/(React|Node|Java|Python|AWS|Azure|GCP|SQL|API|Docker|Kubernetes)/i.test(bullet)) atsScore += 2;
+    });
+    atsScore = bullets.length ? Math.min(100, Math.round((atsScore / (bullets.length * 8)) * 100)) : 60;
 
     // Store resume bullets in memory layer for future retrieval
     if (bullets.length > 0) {
