@@ -150,7 +150,8 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
       'application/rtf': ['.rtf']
     },
     multiple: false,
-    disabled: isUploading
+    disabled: isUploading,
+    noClick: true,
   });
 
   return (
