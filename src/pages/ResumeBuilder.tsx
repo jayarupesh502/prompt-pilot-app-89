@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
 import { Upload, FileText, Target, Brain, CheckCircle, ArrowRight, RotateCcw, AlertCircle } from 'lucide-react';
 
 // New components
@@ -23,6 +24,8 @@ const ResumeBuilder: React.FC = () => {
   const [jobData, setJobData] = useState<any>(null);
   const [tailoringResult, setTailoringResult] = useState<any>(null);
   const [workflowProgress, setWorkflowProgress] = useState(0);
+  const [resumeText, setResumeText] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { isGuest, user } = useAuthStore();
   const { calculateAtsScore, isLoading } = useResumeParser();
@@ -66,6 +69,36 @@ const ResumeBuilder: React.FC = () => {
     setCurrentStep('job-analysis');
   };
 
+  const handleResumeTextSubmit = async () => {
+    if (!resumeText.trim()) return;
+    
+    setIsProcessing(true);
+    try {
+      // Create a mock parsed resume structure from the text
+      const mockResume = {
+        id: `text_${Date.now()}`,
+        title: 'Pasted Resume',
+        parsed_content: {
+          profile: { name: '', email: '', phone: '', location: '', summary: resumeText },
+          experience: [],
+          education: [],
+          skills: [],
+          projects: []
+        },
+        ats_score: 50, // Default score
+        created_at: new Date().toISOString(),
+        originalFilename: 'pasted-resume.txt'
+      };
+
+      setResumeData(mockResume);
+      setCurrentStep('job-analysis');
+    } catch (error) {
+      console.error('Error processing resume text:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleJobAnalyzed = (job: any) => {
     setJobData(job);
     setCurrentStep('tailoring');
@@ -80,7 +113,8 @@ const ResumeBuilder: React.FC = () => {
     setCurrentStep('upload');
     setResumeData(null);
     setJobData(null);
-    setTailoringResult(null);
+    setResumeText('');
+    setIsProcessing(false);
   };
 
   const getStepStatus = (step: WorkflowStep) => {
@@ -152,7 +186,30 @@ const ResumeBuilder: React.FC = () => {
           {/* Step 1: Resume Upload */}
           {currentStep === 'upload' && (
             <div className="space-y-6">
-              <ResumeUpload onUploadSuccess={handleResumeUploaded} />
+              {/* Commented out file upload for now */}
+              {/* <ResumeUpload onUploadSuccess={handleResumeUploaded} /> */}
+              
+              {/* Text input for resume content */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Paste Your Resume Text</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Textarea
+                    placeholder="Paste your resume content here..."
+                    value={resumeText}
+                    onChange={(e) => setResumeText(e.target.value)}
+                    className="min-h-[300px] font-mono text-sm"
+                  />
+                  <Button 
+                    onClick={handleResumeTextSubmit}
+                    disabled={!resumeText.trim() || isProcessing}
+                    className="w-full"
+                  >
+                    {isProcessing ? 'Processing...' : 'Process Resume Text'}
+                  </Button>
+                </CardContent>
+              </Card>
               
               {isGuest && (
                 <Alert>
