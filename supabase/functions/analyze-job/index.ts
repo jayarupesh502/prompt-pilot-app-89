@@ -22,19 +22,22 @@ serve(async (req) => {
 
     console.log('Analyzing job description, length:', jobText.length);
 
-    // Use GPT-4o-mini to analyze and extract job requirements
-    const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a job description analyzer. Extract structured data and return ONLY valid JSON in this exact format:
+    let parsedContent;
+    
+    try {
+      // Try AI analysis first
+      const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openAIApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a job description analyzer. Extract structured data and return ONLY valid JSON in this exact format:
 {
   "title": "string",
   "company": "string", 
@@ -62,20 +65,30 @@ Focus on extracting:
 - Experience level needed
 
 Return only the JSON, no other text.`
-          },
-          { role: 'user', content: `Analyze this job description:\n\n${jobText}` }
-        ],
-        max_tokens: 1500,
-        temperature: 0.2
-      }),
-    });
+            },
+            { role: 'user', content: `Analyze this job description:\n\n${jobText}` }
+          ],
+          max_tokens: 1500,
+          temperature: 0.2
+        }),
+      });
 
-    if (!analysisResponse.ok) {
-      throw new Error(`OpenAI API error: ${analysisResponse.statusText}`);
+      if (!analysisResponse.ok) {
+        const errorData = await analysisResponse.json();
+        console.log('OpenAI API error:', analysisResponse.status, JSON.stringify(errorData));
+        throw new Error(`OpenAI API error: ${analysisResponse.statusText}`);
+      }
+
+      const analysisData = await analysisResponse.json();
+      parsedContent = JSON.parse(analysisData.choices[0].message.content);
+      console.log('AI analysis successful');
+      
+    } catch (aiError) {
+      console.log('AI analysis failed, falling back to heuristic analysis:', aiError.message);
+      
+      // Fallback to heuristic analysis
+      parsedContent = performHeuristicAnalysis(jobText);
     }
-
-    const analysisData = await analysisResponse.json();
-    const parsedContent = JSON.parse(analysisData.choices[0].message.content);
 
     console.log('Analyzed job structure:', JSON.stringify(parsedContent, null, 2));
 
@@ -115,6 +128,74 @@ Return only the JSON, no other text.`
     });
   }
 });
+
+function performHeuristicAnalysis(jobText: string) {
+  console.log('Performing heuristic job analysis...');
+  
+  const text = jobText.toLowerCase();
+  
+  // Extract common skills using regex patterns
+  const skillPatterns = {
+    languages: ['javascript', 'typescript', 'python', 'java', 'c#', 'php', 'ruby', 'go', 'rust', 'swift'],
+    frameworks: ['react', 'angular', 'vue', 'node.js', 'express', 'django', 'flask', 'spring', '.net'],
+    databases: ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'oracle'],
+    tools: ['git', 'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'jenkins', 'jira'],
+    methodologies: ['agile', 'scrum', 'devops', 'ci/cd', 'tdd', 'api']
+  };
+  
+  const extractedSkills: string[] = [];
+  const techStack: string[] = [];
+  
+  // Find skills in the text
+  Object.values(skillPatterns).flat().forEach(skill => {
+    if (text.includes(skill.toLowerCase())) {
+      extractedSkills.push(skill);
+      if (['languages', 'frameworks', 'databases', 'tools'].some(category => 
+        skillPatterns[category as keyof typeof skillPatterns]?.includes(skill))) {
+        techStack.push(skill);
+      }
+    }
+  });
+  
+  // Extract experience requirements
+  const experienceMatch = text.match(/(\d+)[\s\-]*(?:years?|yrs?)\s+(?:of\s+)?experience/i);
+  const experienceYears = experienceMatch ? `${experienceMatch[1]} years` : 'Not specified';
+  
+  // Extract education requirements
+  const educationKeywords = ['bachelor', 'master', 'phd', 'degree', 'diploma', 'certification'];
+  const education = educationKeywords.some(keyword => text.includes(keyword)) 
+    ? 'Bachelor\'s degree or equivalent' 
+    : 'Not specified';
+  
+  // Extract job title (usually in first few lines)
+  const lines = jobText.split('\n').filter(line => line.trim());
+  const title = lines[0]?.trim() || 'Job Position';
+  
+  // Extract responsibilities (lines with action verbs)
+  const actionVerbs = ['develop', 'design', 'implement', 'maintain', 'create', 'build', 'manage', 'lead', 'collaborate'];
+  const responsibilities = lines.filter(line => 
+    actionVerbs.some(verb => line.toLowerCase().includes(verb)) && line.length > 20
+  ).slice(0, 5);
+  
+  return {
+    title,
+    company: 'Company Name',
+    location: 'Location',
+    requirements: {
+      required_skills: extractedSkills.slice(0, 8),
+      preferred_skills: extractedSkills.slice(8, 12),
+      experience_years: experienceYears,
+      education,
+      certifications: []
+    },
+    responsibilities,
+    keywords: extractedSkills.slice(0, 10),
+    tech_stack: techStack,
+    industry: 'Technology',
+    employment_type: text.includes('contract') ? 'Contract' : 'Full-time',
+    salary_range: 'Not specified'
+  };
+}
 
 function createTechStackMapping(techStack: string[]): Record<string, string[]> {
   const mappings: Record<string, string[]> = {};
