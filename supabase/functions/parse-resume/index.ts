@@ -32,29 +32,27 @@ serve(async (req) => {
 
     // Extract text based on file type
     let text = '';
-    const fileType = file.type || file.name.split('.').pop()?.toLowerCase();
+    const fileName = file.name.toLowerCase();
+    const fileExtension = fileName.split('.').pop() || '';
+    const mimeType = file.type.toLowerCase();
 
-    if (fileType?.includes('pdf')) {
-      // For PDF files, we'll use a simple text extraction approach
-      // In production, you'd want to use a proper PDF parsing library
-      const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-      
-      // Simple PDF text extraction (this is a simplified approach)
-      const decoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false });
-      text = decoder.decode(uint8Array);
-      
-      // Extract readable text using regex patterns for PDF
-      const textMatches = text.match(/\(([^)]+)\)/g);
-      if (textMatches) {
-        text = textMatches.map(match => match.slice(1, -1)).join(' ');
-      } else {
-        text = 'Unable to extract text from PDF. Please try a different format.';
-      }
-    } else if (fileType?.includes('word') || fileType?.includes('docx')) {
-      text = await file.text();
+    console.log('File details:', { fileName, fileExtension, mimeType, size: file.size });
+
+    // Determine file type and extract text accordingly
+    if (isPDF(mimeType, fileExtension)) {
+      text = await extractPDFText(file);
+    } else if (isWordDocument(mimeType, fileExtension)) {
+      text = await extractWordText(file);
+    } else if (isTextDocument(mimeType, fileExtension)) {
+      text = await extractPlainText(file);
     } else {
-      text = await file.text();
+      // Fallback: try to read as plain text
+      try {
+        text = await file.text();
+      } catch (error) {
+        console.error('Failed to read file as text:', error);
+        text = 'Unable to extract text from this file format. Please try uploading a PDF, Word document, or plain text file.';
+      }
     }
 
     // Sanitize text to remove problematic unicode sequences
@@ -323,4 +321,122 @@ function sanitizeText(text: string): string {
     // Clean up whitespace
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+// File type detection functions
+function isPDF(mimeType: string, extension: string): boolean {
+  return mimeType.includes('pdf') || extension === 'pdf';
+}
+
+function isWordDocument(mimeType: string, extension: string): boolean {
+  const wordMimes = [
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'application/vnd.ms-word'
+  ];
+  const wordExtensions = ['docx', 'doc', 'docm', 'dotx', 'dotm'];
+  
+  return wordMimes.some(mime => mimeType.includes(mime)) || 
+         wordExtensions.includes(extension);
+}
+
+function isTextDocument(mimeType: string, extension: string): boolean {
+  const textMimes = ['text/plain', 'text/rtf', 'application/rtf'];
+  const textExtensions = ['txt', 'rtf', 'text'];
+  
+  return textMimes.some(mime => mimeType.includes(mime)) || 
+         textExtensions.includes(extension);
+}
+
+// Text extraction functions
+async function extractPDFText(file: File): Promise<string> {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    // Convert to string safely
+    let text = '';
+    try {
+      // Try UTF-8 first
+      const decoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false });
+      text = decoder.decode(uint8Array);
+    } catch {
+      // Fallback to latin1 if UTF-8 fails
+      const decoder = new TextDecoder('latin1', { ignoreBOM: true, fatal: false });
+      text = decoder.decode(uint8Array);
+    }
+    
+    // Extract text patterns commonly found in PDFs
+    const patterns = [
+      // Text in parentheses (common PDF text encoding)
+      /\(([^)]+)\)/g,
+      // Text after Tj or TJ operators
+      /(?:Tj|TJ)\s*(.+?)(?:\s+|$)/g,
+      // Text in brackets
+      /\[([^\]]+)\]/g,
+      // Simple text patterns
+      /[A-Za-z][A-Za-z0-9\s,.\-@()]{10,}/g
+    ];
+    
+    let extractedText = '';
+    for (const pattern of patterns) {
+      const matches = text.match(pattern);
+      if (matches && matches.length > 0) {
+        extractedText += matches.map(match => {
+          // Clean up the match
+          return match.replace(/[()[\]]/g, '').trim();
+        }).join(' ') + ' ';
+      }
+    }
+    
+    // If no patterns worked, try to extract readable ASCII text
+    if (extractedText.trim().length < 50) {
+      extractedText = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ');
+    }
+    
+    return extractedText.length > 50 ? extractedText : 
+           'PDF text extraction was limited. Please try converting your PDF to a Word document or plain text for better results.';
+           
+  } catch (error) {
+    console.error('PDF extraction error:', error);
+    return 'Unable to extract text from PDF. Please try uploading a Word document or plain text file.';
+  }
+}
+
+async function extractWordText(file: File): Promise<string> {
+  try {
+    // For Word documents, try to read as text first
+    // This works for simple .doc files and some .docx files
+    const text = await file.text();
+    
+    // If we get readable text, return it
+    if (text && text.length > 50 && /[a-zA-Z]/.test(text)) {
+      return text;
+    }
+    
+    // If direct text reading doesn't work, try to extract from binary
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const decoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false });
+    const rawText = decoder.decode(uint8Array);
+    
+    // Extract readable text patterns
+    const readableText = rawText.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ');
+    
+    return readableText.length > 50 ? readableText : 
+           'Word document text extraction was limited. Please try saving your document as a plain text file or PDF.';
+           
+  } catch (error) {
+    console.error('Word extraction error:', error);
+    return 'Unable to extract text from Word document. Please try converting to PDF or plain text format.';
+  }
+}
+
+async function extractPlainText(file: File): Promise<string> {
+  try {
+    return await file.text();
+  } catch (error) {
+    console.error('Plain text extraction error:', error);
+    return 'Unable to read text file. Please ensure the file is not corrupted.';
+  }
 }
