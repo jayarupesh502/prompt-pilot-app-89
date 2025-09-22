@@ -73,6 +73,15 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
       if (error) throw error;
 
       if (!data.success) {
+        // Handle specific validation errors for non-resume files
+        if (data.reason && data.suggestion) {
+          toast({
+            title: "Not a resume file",
+            description: `${data.reason} ${data.suggestion}`,
+            variant: "destructive"
+          });
+          return;
+        }
         throw new Error(data.error || 'Failed to parse resume');
       }
 

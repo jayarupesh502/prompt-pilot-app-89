@@ -65,7 +65,59 @@ serve(async (req) => {
       text = text.slice(0, 20000);
     }
 
-    // Helper: call OpenAI with retries
+    // Helper: validate if content is a resume using OpenAI
+    async function validateIsResume(inputText: string): Promise<{ isResume: boolean; reason: string }> {
+      try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are a resume validator. Analyze the given text and determine if it's a resume or CV. 
+
+A resume/CV typically contains:
+- Personal contact information (name, email, phone)
+- Work experience with job titles and companies
+- Education information
+- Skills section
+- Professional summary or objective
+
+Return ONLY a JSON object in this exact format:
+{
+  "isResume": boolean,
+  "reason": "string explaining why it is or isn't a resume"
+}`
+              },
+              { role: 'user', content: `Analyze if this is a resume:\n\n${inputText.slice(0, 2000)}` }
+            ],
+            max_tokens: 200,
+            temperature: 0.1
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          try {
+            return JSON.parse(data.choices[0].message.content);
+          } catch (_e) {
+            return { isResume: false, reason: "Failed to validate document format" };
+          }
+        }
+        
+        return { isResume: false, reason: "Unable to validate document with AI" };
+      } catch (error) {
+        console.error('Resume validation error:', error);
+        return { isResume: false, reason: "Validation service unavailable" };
+      }
+    }
+
+    // Helper: call OpenAI to parse resume with retries
     async function callOpenAIWithRetry(inputText: string, retries = 3): Promise<any | null> {
       for (let attempt = 1; attempt <= retries; attempt++) {
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -120,7 +172,7 @@ serve(async (req) => {
 }
 Return only the JSON, no other text.`
               },
-              { role: 'user', content: `Parse this resume text (truncated):\n\n${inputText}` }
+              { role: 'user', content: `Parse this resume text:\n\n${inputText}` }
             ],
             max_tokens: 1500,
             temperature: 0.2
@@ -148,6 +200,65 @@ Return only the JSON, no other text.`
         return null;
       }
       return null;
+    }
+
+    // Helper: calculate ATS score using OpenAI
+    async function calculateATSScore(resumeContent: any, rawText: string): Promise<number> {
+      try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `You are an ATS (Applicant Tracking System) analyzer. Evaluate this resume and provide an ATS compatibility score from 0-100.
+
+Consider these factors:
+- Clear section headers (Experience, Education, Skills)
+- Quantifiable achievements with metrics
+- Relevant keywords and technical skills
+- Professional formatting and structure
+- Action verbs and impact statements
+- Contact information completeness
+- Education and experience details
+
+Return ONLY a JSON object:
+{
+  "score": number (0-100),
+  "strengths": ["string"],
+  "improvements": ["string"]
+}`
+              },
+              { 
+                role: 'user', 
+                content: `Analyze this resume for ATS compatibility:\n\nStructured Data: ${JSON.stringify(resumeContent)}\n\nRaw Text: ${rawText.slice(0, 1500)}` 
+              }
+            ],
+            max_tokens: 500,
+            temperature: 0.1
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          try {
+            const result = JSON.parse(data.choices[0].message.content);
+            return Math.max(0, Math.min(100, result.score || 50));
+          } catch (_e) {
+            return 50; // Default fallback score
+          }
+        }
+        
+        return 50; // Default fallback score
+      } catch (error) {
+        console.error('ATS scoring error:', error);
+        return 50; // Default fallback score
+      }
     }
 
     // Heuristic parser fallback
@@ -213,6 +324,25 @@ Return only the JSON, no other text.`
       };
     }
 
+    // First validate if this is actually a resume
+    console.log('Validating if content is a resume...');
+    const validation = await validateIsResume(text);
+    
+    if (!validation.isResume) {
+      console.log('File is not a resume:', validation.reason);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'This file does not appear to be a resume.',
+        reason: validation.reason,
+        suggestion: 'Please upload a document that contains work experience, education, and contact information.'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('File validated as resume, proceeding with parsing...');
+
     // Try OpenAI first, then fallback
     let parsedContent = await callOpenAIWithRetry(text);
     if (!parsedContent) {
@@ -222,7 +352,11 @@ Return only the JSON, no other text.`
 
     console.log('Parsed resume structure (final):', JSON.stringify(parsedContent).slice(0, 500));
 
-    // Calculate overall ATS score (heuristic if no bullets)
+    // Calculate ATS score using OpenAI
+    console.log('Calculating ATS score...');
+    const atsScore = await calculateATSScore(parsedContent, text);
+
+    // Extract bullets for memory layer storage
     let bullets: string[] = [
       ...(parsedContent.experience?.flatMap((exp: any) => exp.bullets || []) || []),
       ...(parsedContent.projects?.flatMap((proj: any) => proj.bullets || []) || [])
@@ -231,15 +365,6 @@ Return only the JSON, no other text.`
     if (bullets.length === 0) {
       bullets = text.split(/\n|\.|;/).map(s => s.trim()).filter(s => s.length > 30).slice(0, 10);
     }
-
-    let atsScore = 0;
-    bullets.forEach(bullet => {
-      if (/\d+/.test(bullet)) atsScore += 3;
-      if (/^(Led|Managed|Developed|Created|Implemented|Optimized|Increased|Reduced)/i.test(bullet)) atsScore += 2;
-      if (bullet.length > 50) atsScore += 1;
-      if (/(React|Node|Java|Python|AWS|Azure|GCP|SQL|API|Docker|Kubernetes)/i.test(bullet)) atsScore += 2;
-    });
-    atsScore = bullets.length ? Math.min(100, Math.round((atsScore / (bullets.length * 8)) * 100)) : 60;
 
     // Store resume bullets in memory layer for future retrieval
     if (bullets.length > 0) {
