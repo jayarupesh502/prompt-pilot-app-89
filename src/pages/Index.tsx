@@ -15,6 +15,13 @@ import {
   TrendingUp
 } from 'lucide-react';
 
+// Import new landing page components
+import { DemoVideo } from '@/components/landing/DemoVideo';
+import { FeatureHighlights } from '@/components/landing/FeatureHighlights';
+import { Testimonials } from '@/components/landing/Testimonials';
+import { PricingSection } from '@/components/landing/PricingSection';
+import { FAQSection } from '@/components/landing/FAQSection';
+
 const Index = () => {
   const navigate = useNavigate();
   const { user, isGuest, createGuestSession } = useAuthStore();
@@ -97,6 +104,21 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Demo Video Section */}
+      <DemoVideo />
+
+      {/* Feature Highlights */}
+      <FeatureHighlights />
+
+      {/* Testimonials */}
+      <Testimonials />
+
+      {/* Pricing */}
+      <PricingSection />
+
+      {/* FAQ */}
+      <FAQSection />
     </div>
   );
 };
