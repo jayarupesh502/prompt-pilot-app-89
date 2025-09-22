@@ -65,7 +65,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
               )}
             </div>
 
-            {resume.profile.summary && (
+            {resume.profile.summary && resume.profile.summary.trim() && (
               <p className="text-sm leading-relaxed mt-4 max-w-3xl mx-auto">
                 {resume.profile.summary}
               </p>

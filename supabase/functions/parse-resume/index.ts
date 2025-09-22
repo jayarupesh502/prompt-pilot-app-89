@@ -340,7 +340,7 @@ Return ONLY a JSON object:
       if (!isLikelyResume(input)) {
         console.log('Heuristic parser: File does not appear to be a resume, returning minimal structure');
         return {
-          profile: { name: '', email: '', phone: '', location: '', summary: 'This file does not appear to be a resume. Please upload a proper resume document.' },
+          profile: { name: '', email: '', phone: '', location: '', summary: '' },
           experience: [],
           education: [],
           skills: [],
