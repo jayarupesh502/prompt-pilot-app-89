@@ -108,20 +108,43 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
         });
       }
 
-      // Store in resume store
+      // Store in resume store (DB if possible, else fall back to local)
       const resumeTitle = `${file.name.split('.')[0]} Resume`;
-      const newResume = await createResume(
-        resumeTitle,
-        data.parsedContent,
-        isGuest,
-        guestSessionId
-      );
+      let newResume;
+      try {
+        newResume = await createResume(
+          resumeTitle,
+          data.parsedContent,
+          isGuest,
+          guestSessionId
+        );
+      } catch (e: any) {
+        console.warn('Persisting resume failed, falling back to local session:', e?.message || e);
+        // Build a local resume object (not persisted)
+        newResume = {
+          id: `local_${Date.now()}`,
+          title: resumeTitle,
+          parsedContent: data.parsedContent,
+          atsScore: data.atsScore,
+          isGuest: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as any;
+        // Set as current so the builder can continue
+        useResumeStore.getState().setCurrentResume(newResume);
+        toast({
+          title: 'Proceeding without saving',
+          description: 'We could not save this resume to your account. It will be available for this session only.',
+        });
+      }
 
-      // Update the resume with additional metadata
-      await useResumeStore.getState().updateResume(newResume.id, {
-        originalFilename: data.originalFilename,
-        atsScore: data.atsScore
-      });
+      // Try to update extra metadata if persisted
+      try {
+        await useResumeStore.getState().updateResume(newResume.id, {
+          originalFilename: data.originalFilename,
+          atsScore: data.atsScore
+        } as any);
+      } catch (_) {/* ignore if local */}
 
       toast({
         title: "Resume uploaded successfully!",

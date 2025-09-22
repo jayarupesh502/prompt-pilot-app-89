@@ -492,35 +492,25 @@ Return ONLY a JSON object:
     console.log('Validating if content is a resume...');
     const validation = await validateIsResume(text);
 
-    // Check if we should proceed with parsing
-    const heuristicGuess = isLikelyResume(text);
-    
-    if (!validation.isResume && !heuristicGuess) {
-      console.log('File rejected: Both AI and heuristic validation failed');
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'This file does not appear to be a resume or CV.',
-        reason: validation.reason || 'File appears to be a form, document, or other non-resume content.',
-        suggestion: 'Please upload a document that contains work experience, education, and contact information.',
-        diagnostics: { 
-          aiValidation: validation.isResume,
-          heuristicValidation: heuristicGuess,
-          aiReason: validation.reason
-        }
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
+    // Always proceed, but annotate confidence so the UI can warn nicely
     let validationInfo = {
       aiIsResume: validation.isResume,
       reason: validation.reason,
-      heuristicGuess,
-      lowConfidence: !validation.isResume && heuristicGuess,
-    };
+      heuristicGuess: false,
+      lowConfidence: false,
+    } as { aiIsResume: boolean; reason: string; heuristicGuess: boolean; lowConfidence: boolean };
 
-    console.log('File validated, continuing with parsing...');
+    if (!validation.isResume) {
+      // Try heuristic detection and mark low confidence if it also fails
+      const heuristicGuess = isLikelyResume(text);
+      validationInfo.heuristicGuess = heuristicGuess;
+      validationInfo.lowConfidence = !heuristicGuess;
+      console.log('AI validation failed; proceeding with', heuristicGuess ? 'heuristic pass' : 'low confidence (forcing proceed)');
+    } else {
+      validationInfo.heuristicGuess = true;
+    }
+
+    console.log('File validated (forced proceed), continuing with parsing...');
 
     // Try OpenAI first, then fallback
     let parsedContent = await callOpenAIWithRetry(text);
