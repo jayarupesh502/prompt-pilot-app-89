@@ -70,8 +70,15 @@ export interface Resume {
   guestSessionId?: string;
   title: string;
   originalFilename?: string;
+  rawContent?: string;
   parsedContent: ParsedResume;
   atsScore: number;
+  analysisDetails?: {
+    matchingKeywords: string[];
+    missingKeywords: string[];
+    strengths: string[];
+    improvements: string[];
+  };
   isGuest: boolean;
   expiresAt?: string;
   createdAt: string;

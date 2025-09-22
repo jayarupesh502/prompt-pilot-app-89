@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface ATSScoreProps {
   score: number;
+  isCalculating?: boolean;
   previousScore?: number;
   showTrend?: boolean;
   size?: 'sm' | 'md' | 'lg';
@@ -12,6 +13,7 @@ interface ATSScoreProps {
 
 export const ATSScore: React.FC<ATSScoreProps> = ({
   score,
+  isCalculating = false,
   previousScore,
   showTrend = false,
   size = 'md',
@@ -75,7 +77,7 @@ export const ATSScore: React.FC<ATSScoreProps> = ({
         variant="outline" 
         className={`${scoreClass} ${sizeClasses[size]} font-mono font-semibold`}
       >
-        ATS: {score}%
+        {isCalculating ? 'Calculating...' : `ATS: ${score}%`}
       </Badge>
       
       {showTrend && previousScore !== undefined && (

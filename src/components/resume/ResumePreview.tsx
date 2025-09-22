@@ -9,6 +9,7 @@ import { Mail, Phone, MapPin, Calendar, GraduationCap, Briefcase } from 'lucide-
 interface ResumePreviewProps {
   resume: ParsedResume;
   atsScore?: number;
+  isCalculatingATS?: boolean;
   className?: string;
   highlightChanges?: boolean;
   showAtsScore?: boolean;
@@ -17,6 +18,7 @@ interface ResumePreviewProps {
 export const ResumePreview: React.FC<ResumePreviewProps> = ({
   resume,
   atsScore = 0,
+  isCalculatingATS = false,
   className = '',
   highlightChanges = false,
   showAtsScore = true
@@ -29,7 +31,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Resume Preview
             </CardTitle>
-            <ATSScore score={atsScore} size="sm" />
+            <ATSScore score={atsScore} isCalculating={isCalculatingATS} size="sm" />
           </div>
         </CardHeader>
       )}
