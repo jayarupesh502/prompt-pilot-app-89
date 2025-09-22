@@ -217,10 +217,118 @@ Return only the JSON, no other text.`
       return null;
     }
 
-    // Helper: Set initial ATS score to 0 - will be calculated after job description is provided
-    function getInitialATSScore(): number {
-      console.log('Setting initial ATS score to 0 - awaiting job description for accurate scoring');
-      return 0;
+    // Helper: calculate ATS score using OpenAI (with robust heuristic fallback)
+    async function calculateATSScore(resumeContent: any, rawText: string): Promise<number> {
+      // If no API key, skip straight to heuristics
+      const canUseAI = !!openAIApiKey;
+      if (canUseAI) {
+        try {
+          const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openAIApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are an ATS (Applicant Tracking System) analyzer. Evaluate this resume and provide an ATS compatibility score from 0-100.
+
+Consider these factors:
+- Clear section headers (Experience, Education, Skills)
+- Quantifiable achievements with metrics
+- Relevant keywords and technical skills
+- Professional formatting and structure
+- Action verbs and impact statements
+- Contact information completeness
+- Education and experience details
+
+Return ONLY a JSON object:
+{
+  "score": number (0-100),
+  "strengths": ["string"],
+  "improvements": ["string"]
+}`
+                },
+              { 
+                role: 'user', 
+                content: `Analyze this resume for ATS compatibility:\n\nStructured Data: ${JSON.stringify(resumeContent)}\n\nRaw Text (first 4000 chars): ${rawText.slice(0, 4000)}` 
+              }
+              ],
+              max_tokens: 500,
+              temperature: 0.1
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            try {
+              const result = JSON.parse(data.choices[0].message.content);
+              const aiScore = Number(result.score);
+              if (!Number.isNaN(aiScore) && aiScore >= 0 && aiScore <= 100) return aiScore;
+            } catch (_e) {
+              // fall through to heuristics
+            }
+          } else {
+            const body = await res.text().catch(() => '');
+            console.error('ATS AI scoring failed:', res.status, body);
+          }
+        } catch (error) {
+          console.error('ATS scoring error:', error);
+        }
+      }
+
+      // Heuristic fallback scoring (0-100)
+      try {
+        const text = rawText || '';
+        const lower = text.toLowerCase();
+        const words = text.trim().split(/\s+/).length;
+        const bullets = (
+          (resumeContent?.experience?.flatMap((e: any) => e?.bullets || []) || [])
+            .concat(resumeContent?.projects?.flatMap((p: any) => p?.bullets || []) || [])
+        ).filter(Boolean) as string[];
+
+        const countMatches = (re: RegExp) => (text.match(re) || []).length;
+        const has = (re: RegExp) => re.test(lower);
+
+        // Section presence
+        let score = 0;
+        if (has(/experience|work|employment/)) score += 15;
+        if (has(/education|university|college|degree|bachelor|master/)) score += 10;
+        if (has(/skills|technical|technologies|tools|languages|frameworks/)) score += 10;
+
+        // Bullets and structure
+        const bulletCount = countMatches(/(^|\n)\s*[-•·]/g);
+        score += Math.min(15, bulletCount * 2);
+
+        // Metrics and action verbs
+        const metricCount = countMatches(/\b\d{1,3}(?:[,%]|k|m)?\b/g);
+        score += Math.min(12, metricCount * 2);
+        const actionVerbs = /(led|managed|developed|created|implemented|optimized|designed|built|architected|increased|reduced|launched|delivered|migrated|automated)/g;
+        score += Math.min(12, countMatches(actionVerbs));
+
+        // Keywords/tech
+        const techRegex = /(react|node|typescript|python|java|c\+\+|aws|azure|gcp|docker|kubernetes|sql|nosql|api|microservices|graphql|rest)/g;
+        const uniqueTech = new Set((lower.match(techRegex) || []));
+        score += Math.min(16, uniqueTech.size * 2);
+
+        // Contact & formatting
+        if (/[\w.+-]+@\w+\.[\w.-]+/.test(text)) score += 5;
+        if (/\+?\d[\d\s().-]{7,}/.test(text)) score += 5;
+        if (bullets.length > 5) score += 5;
+
+        // Length normalization
+        if (words >= 180 && words <= 1500) score += 10;
+        else if (words < 120) score -= 10;
+
+        // Clamp and return
+        return Math.max(20, Math.min(100, Math.round(score)));
+      } catch (_e) {
+        // Absolute fallback if heuristics fail
+        return 60;
+      }
     }
 
     // Heuristic parser fallback
@@ -364,9 +472,9 @@ Return only the JSON, no other text.`
 
     console.log('Parsed resume structure (final):', JSON.stringify(parsedContent).slice(0, 500));
 
-    // Set initial ATS score to 0 - will be calculated when job description is provided
-    console.log('Setting initial ATS score to 0 - awaiting job description...');
-    const atsScore = getInitialATSScore();
+    // Calculate ATS score using OpenAI
+    console.log('Calculating ATS score...');
+    const atsScore = await calculateATSScore(parsedContent, text);
 
     // Extract bullets for memory layer storage
     let bullets: string[] = [
