@@ -14,13 +14,376 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      job_descriptions: {
+        Row: {
+          company: string | null
+          created_at: string
+          expires_at: string | null
+          guest_session_id: string | null
+          id: string
+          is_guest: boolean | null
+          parsed_content: Json
+          raw_content: string
+          source_url: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          expires_at?: string | null
+          guest_session_id?: string | null
+          id?: string
+          is_guest?: boolean | null
+          parsed_content: Json
+          raw_content: string
+          source_url?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          expires_at?: string | null
+          guest_session_id?: string | null
+          id?: string
+          is_guest?: boolean | null
+          parsed_content?: Json
+          raw_content?: string
+          source_url?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      resume_bullets: {
+        Row: {
+          created_at: string
+          embedding: string | null
+          expires_at: string | null
+          guest_session_id: string | null
+          id: string
+          impact_score: number | null
+          is_guest: boolean | null
+          resume_id: string | null
+          skills: string[] | null
+          text: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          embedding?: string | null
+          expires_at?: string | null
+          guest_session_id?: string | null
+          id?: string
+          impact_score?: number | null
+          is_guest?: boolean | null
+          resume_id?: string | null
+          skills?: string[] | null
+          text: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          embedding?: string | null
+          expires_at?: string | null
+          guest_session_id?: string | null
+          id?: string
+          impact_score?: number | null
+          is_guest?: boolean | null
+          resume_id?: string | null
+          skills?: string[] | null
+          text?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_bullets_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resumes: {
+        Row: {
+          ats_score: number | null
+          created_at: string
+          expires_at: string | null
+          guest_session_id: string | null
+          id: string
+          is_guest: boolean | null
+          original_filename: string | null
+          parsed_content: Json
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ats_score?: number | null
+          created_at?: string
+          expires_at?: string | null
+          guest_session_id?: string | null
+          id?: string
+          is_guest?: boolean | null
+          original_filename?: string | null
+          parsed_content: Json
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ats_score?: number | null
+          created_at?: string
+          expires_at?: string | null
+          guest_session_id?: string | null
+          id?: string
+          is_guest?: boolean | null
+          original_filename?: string | null
+          parsed_content?: Json
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      tailoring_sessions: {
+        Row: {
+          accepted_changes: Json | null
+          ats_score_after: number | null
+          ats_score_before: number | null
+          created_at: string
+          expires_at: string | null
+          guest_session_id: string | null
+          id: string
+          is_guest: boolean | null
+          job_description_id: string | null
+          mode: string | null
+          original_content: Json
+          resume_id: string | null
+          suggested_content: Json
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_changes?: Json | null
+          ats_score_after?: number | null
+          ats_score_before?: number | null
+          created_at?: string
+          expires_at?: string | null
+          guest_session_id?: string | null
+          id?: string
+          is_guest?: boolean | null
+          job_description_id?: string | null
+          mode?: string | null
+          original_content: Json
+          resume_id?: string | null
+          suggested_content: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_changes?: Json | null
+          ats_score_after?: number | null
+          ats_score_before?: number | null
+          created_at?: string
+          expires_at?: string | null
+          guest_session_id?: string | null
+          id?: string
+          is_guest?: boolean | null
+          job_description_id?: string | null
+          mode?: string | null
+          original_content?: Json
+          resume_id?: string | null
+          suggested_content?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tailoring_sessions_job_description_id_fkey"
+            columns: ["job_description_id"]
+            isOneToOne: false
+            referencedRelation: "job_descriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tailoring_sessions_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          industry: string | null
+          is_public: boolean | null
+          name: string
+          template_content: Json
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_public?: boolean | null
+          name: string
+          template_content: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          is_public?: boolean | null
+          name?: string
+          template_content?: Json
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
+      cleanup_guest_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
