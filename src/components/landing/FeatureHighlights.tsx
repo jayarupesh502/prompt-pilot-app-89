@@ -77,51 +77,58 @@ export const FeatureHighlights: React.FC = () => {
   ];
 
   return (
-    <section className="py-16 space-y-16">
+    <section className="py-32 space-y-20 relative">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-gradient-to-br from-accent/30 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-bl from-primary/30 to-transparent rounded-full blur-3xl"></div>
+      </div>
+      
       {/* Main Features */}
-      <div className="text-center space-y-12">
-        <div className="space-y-4">
-          <Badge variant="outline" className="px-4 py-2">
-            <Zap className="w-4 h-4 mr-2" />
-            Powered by Advanced AI
+      <div className="relative z-10 text-center space-y-16">
+        <div className="space-y-6">
+          <Badge variant="outline" className="px-8 py-4 text-lg border-primary/30 bg-primary/10 hover:bg-primary/20 transition-all duration-300 hover:scale-105 font-medium">
+            <Zap className="w-6 h-6 mr-3 text-primary" />
+            Powered by Advanced AI Technology
           </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold">
+          <h2 className="font-display text-5xl md:text-6xl font-bold leading-tight">
             Everything You Need to{' '}
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="hero-gradient">
               Land Your Dream Job
             </span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Our AI-powered platform gives you every advantage in today's competitive job market
+          <p className="text-2xl text-foreground/80 max-w-4xl mx-auto leading-relaxed font-light">
+            Our comprehensive AI platform provides every advantage you need in today's competitive job market
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 max-w-7xl mx-auto">
           {mainFeatures.map((feature, index) => (
             <Card 
               key={index} 
-              className={`feature-card hover:shadow-2xl transition-all duration-500 border-0 ${feature.gradient} group cursor-pointer overflow-hidden relative`}
-              style={{animationDelay: `${index * 0.2}s`}}
+              className={`glass-card group cursor-pointer overflow-hidden relative border-0 ${feature.gradient} hover:scale-105 transition-all duration-700 shadow-luxury hover:shadow-glow`}
+              style={{animationDelay: `${index * 0.3}s`}}
             >
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              {/* Sophisticated overlay effects */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
               
-              <CardContent className="p-8 space-y-6 relative z-10">
-                <div className={`w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
+              <CardContent className="p-12 space-y-8 relative z-10 text-center">
+                <div className={`w-28 h-28 mx-auto rounded-3xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white shadow-luxury group-hover:scale-110 group-hover:rotate-12 transition-all duration-700`}>
                   {feature.icon}
                 </div>
                 
-                <div className="space-y-4 text-center">
-                  <h3 className="text-2xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
+                <div className="space-y-6">
+                  <h3 className="font-display text-3xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors leading-tight">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed text-lg">
+                  <p className="text-gray-700 leading-relaxed text-xl font-light">
                     {feature.description}
                   </p>
                 </div>
                 
-                <div className="pt-4">
-                  <Badge className={`bg-gradient-to-r ${feature.color} text-white text-base px-4 py-2 font-semibold mx-auto block w-fit group-hover:scale-105 transition-transform duration-300`}>
+                <div className="pt-6">
+                  <Badge className={`bg-gradient-to-r ${feature.color} text-white text-lg px-6 py-3 font-semibold mx-auto block w-fit group-hover:scale-105 transition-transform duration-500 shadow-lg`}>
                     ✨ {feature.benefit}
                   </Badge>
                 </div>
@@ -132,13 +139,13 @@ export const FeatureHighlights: React.FC = () => {
       </div>
 
       {/* Supporting Features Grid */}
-      <div className="space-y-8">
-        <div className="text-center space-y-4">
-          <h3 className="text-2xl md:text-3xl font-bold">
+      <div className="relative z-10 space-y-12">
+        <div className="text-center space-y-6">
+          <h3 className="font-display text-4xl md:text-5xl font-bold">
             Complete Resume Management Platform
           </h3>
-          <p className="text-muted-foreground max-w-xl mx-auto">
-            Beyond AI optimization, get tools for managing your entire job application process
+          <p className="text-xl text-foreground/80 max-w-3xl mx-auto font-light">
+            Beyond AI optimization, get powerful tools for managing your entire job application process
           </p>
         </div>
 

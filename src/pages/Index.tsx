@@ -58,64 +58,70 @@ const Index = () => {
   }
 
   return (
-    <div className="space-y-20">
-      {/* Enhanced Hero Section */}
-      <section className="relative text-center space-y-8 py-20 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-background -z-10"></div>
-        
-        {/* Floating elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-primary/10 rounded-full blur-xl animate-float"></div>
-        <div className="absolute top-40 right-20 w-16 h-16 bg-accent/10 rounded-full blur-xl animate-float" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-primary-variant/10 rounded-full blur-xl animate-float" style={{animationDelay: '2s'}}></div>
-        
-        <div className="space-y-6 animate-fade-in">
-          <Badge variant="outline" className="px-6 py-3 text-base border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all duration-300 hover:scale-105">
-            <Sparkles className="w-5 h-5 mr-2 text-primary" />
-            AI-Powered Resume Optimization
-          </Badge>
-          
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-            Land More Interviews with{' '}
-            <span className="hero-gradient">
-              AI-Tailored Resumes
-            </span>
-          </h1>
-          
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-            PulpResume uses GPT-4o to instantly optimize your resume for any job description. 
-            Get past ATS filters and impress recruiters with targeted, high-impact content.
-          </p>
+    <div className="space-y-32 pb-20">
+      {/* Sophisticated Hero Section */}
+      <section className="relative text-center space-y-12 py-32 overflow-hidden">
+        {/* Elegant background pattern */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute top-32 right-0 w-80 h-80 bg-gradient-to-bl from-accent/20 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-1/2 w-64 h-64 bg-gradient-to-t from-primary-variant/20 to-transparent rounded-full blur-3xl"></div>
         </div>
         
-        <div className="flex items-center justify-center space-x-6 animate-slide-up" style={{animationDelay: '0.3s'}}>
+        {/* Floating decorative elements */}
+        <div className="absolute top-20 left-16 w-24 h-24 bg-accent/10 rounded-full blur-2xl animate-float"></div>
+        <div className="absolute top-48 right-32 w-20 h-20 bg-primary/10 rounded-full blur-xl animate-float" style={{animationDelay: '1.5s'}}></div>
+        <div className="absolute bottom-32 left-1/3 w-16 h-16 bg-primary-variant/10 rounded-full blur-xl animate-float" style={{animationDelay: '3s'}}></div>
+        
+        <div className="relative z-10 space-y-8 animate-fade-in">
+          <Badge variant="outline" className="px-8 py-4 text-lg border-accent/30 bg-accent/10 hover:bg-accent/20 transition-all duration-500 hover:scale-105 font-medium">
+            <Sparkles className="w-6 h-6 mr-3 text-accent" />
+            AI-Powered Resume Optimization Platform
+          </Badge>
+          
+          <div className="space-y-6">
+            <h1 className="font-display font-bold leading-[0.9] tracking-tight">
+              Transform Your Career with{' '}
+              <span className="hero-gradient block mt-2">
+                Intelligent Resume Optimization
+              </span>
+            </h1>
+            
+            <p className="text-2xl md:text-3xl text-foreground/80 max-w-5xl mx-auto leading-relaxed font-light">
+              Our advanced AI analyzes job requirements and crafts personalized resumes that pass ATS filters 
+              and capture recruiter attention—dramatically increasing your interview success rate.
+            </p>
+          </div>
+        </div>
+        
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-center gap-8 animate-slide-up" style={{animationDelay: '0.4s'}}>
           <Button 
             size="lg" 
-            className="btn-primary text-lg px-8 py-4 hover:scale-105 transition-all duration-300" 
+            className="btn-primary text-xl px-12 py-6 rounded-2xl min-w-64 hover:scale-105 transition-all duration-500 shadow-luxury" 
             onClick={handleTryAsGuest}
           >
-            <FileText className="w-6 h-6 mr-3" />
-            Try as Guest
+            <FileText className="w-7 h-7 mr-4" />
+            Start Free Trial
           </Button>
           <Button 
             size="lg" 
             variant="outline" 
-            className="text-lg px-8 py-4 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 hover:scale-105 transition-all duration-300" 
+            className="text-xl px-12 py-6 rounded-2xl min-w-64 border-2 border-primary/30 bg-white/80 backdrop-blur-sm hover:border-primary/50 hover:bg-white/90 hover:scale-105 transition-all duration-500 font-semibold group" 
             onClick={handleSignUp}
           >
-            Sign Up Free
-            <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
+            View Demo
+            <ArrowRight className="w-7 h-7 ml-4 group-hover:translate-x-2 transition-transform duration-300" />
           </Button>
         </div>
         
-        <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground animate-fade-in" style={{animationDelay: '0.6s'}}>
+        <div className="relative z-10 flex flex-wrap items-center justify-center gap-12 text-lg text-foreground/70 animate-fade-in font-medium" style={{animationDelay: '0.8s'}}>
           {[
             { icon: CheckCircle, text: "No Credit Card Required" },
-            { icon: CheckCircle, text: "7-Day Guest Access" },
-            { icon: CheckCircle, text: "3 Free Resumes" }
+            { icon: CheckCircle, text: "7-Day Full Access" },
+            { icon: CheckCircle, text: "Instant Results" }
           ].map((item, index) => (
-            <div key={index} className="flex items-center space-x-2 hover:text-accent transition-colors duration-300">
-              <item.icon className="w-5 h-5 text-accent" />
+            <div key={index} className="flex items-center space-x-3 hover:text-accent transition-colors duration-500 group">
+              <item.icon className="w-6 h-6 text-accent group-hover:scale-110 transition-transform duration-300" />
               <span>{item.text}</span>
             </div>
           ))}

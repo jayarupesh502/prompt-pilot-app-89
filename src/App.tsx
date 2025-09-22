@@ -61,7 +61,7 @@ const AppContent = () => {
           {/* Desktop header */}
           {!isMobile && <Header />}
           
-          <main className={`flex-1 container mx-auto px-4 py-8 ${isMobile ? 'pt-20' : ''}`}>
+          <main className={`flex-1 container mx-auto px-6 py-12 max-w-7xl ${isMobile ? 'pt-24' : ''}`}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />

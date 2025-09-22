@@ -58,6 +58,11 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      boxShadow: {
+        'luxury': '0 25px 50px -12px hsl(217 19% 27% / 0.25)',
+        'glow': '0 0 60px hsl(31 77% 52% / 0.3)',
+        'accent': '0 20px 40px -10px hsl(31 77% 52% / 0.3)',
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
@@ -96,6 +101,12 @@ export default {
         "slide-up": "slide-up 0.5s ease-out",
         "float": "float 3s ease-in-out infinite",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+      },
+      fontFamily: {
+        'display': ['Playfair Display', 'Georgia', 'serif'],
+        'sans': ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+        'body': ['Inter', 'system-ui', 'sans-serif'],
+        'mono': ['JetBrains Mono', 'monospace'],
       },
     },
   },
