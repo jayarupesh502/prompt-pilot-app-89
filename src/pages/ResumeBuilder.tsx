@@ -27,8 +27,15 @@ const ResumeBuilder: React.FC = () => {
   const [resumeText, setResumeText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const { isGuest, user } = useAuthStore();
-  const { calculateAtsScore, isLoading } = useResumeParser();
+  const { isGuest, user, guestSessionId, createGuestSession } = useAuthStore();
+  const { calculateAtsScore, isLoading, parseJobDescription } = useResumeParser();
+
+  // Create guest session if user is guest and no session exists
+  useEffect(() => {
+    if (isGuest && !guestSessionId) {
+      createGuestSession();
+    }
+  }, [isGuest, guestSessionId, createGuestSession]);
 
   // Update progress based on current step
   useEffect(() => {

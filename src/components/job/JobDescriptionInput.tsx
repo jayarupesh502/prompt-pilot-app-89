@@ -21,7 +21,7 @@ export const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
   className = ''
 }) => {
   const { toast } = useToast();
-  const { isGuest, guestSessionId } = useAuthStore();
+  const { isGuest, guestSessionId, user } = useAuthStore();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [jobText, setJobText] = useState('');
   const [jobUrl, setJobUrl] = useState('');
@@ -44,7 +44,10 @@ export const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
       const { data, error } = await supabase.functions.invoke('analyze-job', {
         body: {
           jobText: jobText.trim(),
-          sourceUrl: activeTab === 'url' ? jobUrl : null
+          sourceUrl: activeTab === 'url' ? jobUrl : null,
+          userId: user?.id,
+          isGuest,
+          guestSessionId
         }
       });
 
@@ -54,35 +57,13 @@ export const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
         throw new Error(data.error || 'Failed to analyze job description');
       }
 
-      // Store job description in database
-      const jobDescriptionData = {
-        title: data.parsedContent.title,
-        company: data.parsedContent.company,
-        raw_content: jobText,
-        parsed_content: data.parsedContent,
-        source_url: data.sourceUrl,
-        is_guest: isGuest,
-        ...(isGuest && guestSessionId ? {
-          guest_session_id: guestSessionId,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        } : {})
-      };
-
-      const { data: savedJob, error: saveError } = await supabase
-        .from('job_descriptions')
-        .insert(jobDescriptionData)
-        .select()
-        .single();
-
-      if (saveError) throw saveError;
-
       toast({
         title: "Job analyzed successfully!",
-        description: `Found ${data.keywordCount} keywords and requirements.`,
+        description: `Found ${data.keywordCount || 0} keywords and requirements.`,
       });
 
-      onAnalysisComplete?.({
-        ...savedJob,
+      // Use the job description data returned from the edge function
+      onAnalysisComplete?.(data.jobDescription || {
         parsedContent: data.parsedContent,
         techEquivalents: data.techEquivalents
       });
