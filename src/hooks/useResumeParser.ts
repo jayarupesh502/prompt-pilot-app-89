@@ -16,23 +16,22 @@ export const useResumeParser = () => {
   const [error, setError] = useState<string | null>(null);
   const { user, isGuest, guestSessionId } = useAuthStore();
 
-  const parseResume = async (file: File): Promise<ParsedResume | null> => {
+  const parseResume = async (file: File): Promise<any | null> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Read file content
-      const fileContent = await file.text();
-      
-      // Call the parse-resume edge function
+      // Create FormData to send the file to the edge function
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('isGuest', isGuest.toString());
+      if (isGuest && guestSessionId) {
+        formData.append('guestSessionId', guestSessionId);
+      }
+
+      // Call the parse-resume edge function with the file
       const { data, error: functionError } = await supabase.functions.invoke('parse-resume', {
-        body: {
-          fileContent,
-          fileName: file.name,
-          userId: user?.id,
-          isGuest,
-          guestSessionId
-        }
+        body: formData
       });
 
       if (functionError) {
@@ -45,10 +44,10 @@ export const useResumeParser = () => {
 
       toast({
         title: "Resume parsed successfully!",
-        description: "Your resume has been analyzed and stored.",
+        description: "Your resume has been analyzed.",
       });
 
-      return data.resume;
+      return data;
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to parse resume';

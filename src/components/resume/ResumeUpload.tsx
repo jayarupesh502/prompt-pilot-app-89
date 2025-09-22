@@ -99,7 +99,7 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
         });
       }
 
-      // Create resume in database
+      // Store in resume store
       const resumeTitle = `${file.name.split('.')[0]} Resume`;
       const newResume = await createResume(
         resumeTitle,
@@ -108,7 +108,7 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
         guestSessionId
       );
 
-      // Update the resume with additional data
+      // Update the resume with additional metadata
       await useResumeStore.getState().updateResume(newResume.id, {
         originalFilename: data.originalFilename,
         atsScore: data.atsScore
@@ -119,13 +119,18 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
         description: `Parsed ${file.name} with ATS score of ${data.atsScore}/100`,
       });
 
-      // Call both callbacks for compatibility
-      onUploadComplete?.(newResume);
-      onUploadSuccess?.({
-        ...newResume,
+      // Call callbacks with the properly structured resume
+      const resumeForCallback = {
+        id: newResume.id,
+        title: newResume.title,
         parsed_content: newResume.parsedContent,
         ats_score: newResume.atsScore,
-      });
+        created_at: newResume.createdAt,
+        originalFilename: data.originalFilename
+      };
+
+      onUploadComplete?.(resumeForCallback);
+      onUploadSuccess?.(resumeForCallback);
 
     } catch (error: any) {
       console.error('Upload error:', error);
