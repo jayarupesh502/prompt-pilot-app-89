@@ -1,45 +1,59 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/stores/authStore';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  Home, 
+  Sidebar, 
+  SidebarContent, 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarGroupLabel, 
+  SidebarMenu, 
+  SidebarMenuButton, 
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+  useSidebar
+} from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
+import { 
+  LayoutDashboard, 
   FileText, 
   History, 
   Layout, 
   BarChart3, 
-  Settings, 
+  Settings,
   LogOut,
-  User
+  User,
+  Home,
+  X
 } from 'lucide-react';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { useAuthStore } from '@/stores/authStore';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AppSidebarProps {
   className?: string;
 }
 
-export const AppSidebar: React.FC<AppSidebarProps> = ({ className = '' }) => {
+export const AppSidebar: React.FC<AppSidebarProps> = ({ className }) => {
   const { user, isGuest, signOut } = useAuthStore();
   const navigate = useNavigate();
-  const { open } = useSidebar();
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
 
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   const navigationItems = [
-    { to: '/dashboard', icon: Home, label: 'Dashboard' },
+    { to: '/', icon: Home, label: 'Home' },
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/builder', icon: FileText, label: 'Resume Builder' },
     { to: '/history', icon: History, label: 'History' },
     { to: '/templates', icon: Layout, label: 'Templates' },
@@ -47,75 +61,111 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = '' }) => {
     { to: '/settings', icon: Settings, label: 'Settings' },
   ];
 
+  // Guest user view
   if (isGuest) {
     return (
-    <Sidebar className={`${!open ? 'w-14' : 'w-60'} ${className}`} collapsible="icon">
+      <Sidebar className={className}>
+        <SidebarHeader className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <FileText className="w-6 h-6 text-primary" />
+              <span className="font-bold text-lg">PulpResume</span>
+            </div>
+            {isMobile && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setOpenMobile(false)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </SidebarHeader>
+        
         <SidebarContent>
           <SidebarGroup>
+            <SidebarGroupLabel>Quick Access</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to="/builder"
-                      className={({ isActive }) =>
-                        `flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                        }`
-                      }
-                    >
-                      <FileText className="w-4 h-4" />
-                      {open && <span>Resume Builder</span>}
+                    <NavLink to="/" onClick={handleNavClick}>
+                      <Home className="w-4 h-4" />
+                      <span>Home</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/auth')}
-                      className="w-full justify-start"
-                    >
-                      <User className="w-4 h-4" />
-                      {open && <span className="ml-2">Sign Up</span>}
-                    </Button>
+                    <NavLink to="/builder" onClick={handleNavClick}>
+                      <FileText className="w-4 h-4" />
+                      <span>Resume Builder</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink to="/templates" onClick={handleNavClick}>
+                      <Layout className="w-4 h-4" />
+                      <span>Templates</span>
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+        
+        <SidebarFooter className="p-4">
+          <Button asChild className="w-full" onClick={handleNavClick}>
+            <NavLink to="/auth">Sign Up Free</NavLink>
+          </Button>
+        </SidebarFooter>
       </Sidebar>
     );
   }
 
+  // Authenticated user view
   return (
-    <Sidebar className={`${!open ? 'w-14' : 'w-60'} ${className}`} collapsible="icon">
+    <Sidebar className={className}>
+      <SidebarHeader className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <FileText className="w-6 h-6 text-primary" />
+            <span className="font-bold text-lg">PulpResume</span>
+          </div>
+          {isMobile && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setOpenMobile(false)}
+              className="h-8 w-8 p-0"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </SidebarHeader>
+      
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className={!open ? 'sr-only' : ''}>
-            Navigation
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map(({ to, icon: Icon, label }) => (
-                <SidebarMenuItem key={to}>
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to={to}
+                      to={item.to}
+                      onClick={handleNavClick}
                       className={({ isActive }) =>
-                        `flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                        }`
+                        isActive ? 'bg-accent text-accent-foreground' : ''
                       }
                     >
-                      <Icon className="w-4 h-4" />
-                      {open && <span>{label}</span>}
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.label}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -123,35 +173,27 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ className = '' }) => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        
-        {user && (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <div className="flex items-center space-x-2 px-3 py-2 text-sm text-muted-foreground">
-                    <User className="w-4 h-4" />
-                    {open && <span className="truncate">{user.email}</span>}
-                  </div>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSignOut}
-                      className="w-full justify-start"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      {open && <span className="ml-2">Sign Out</span>}
-                    </Button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
+      
+      <SidebarFooter className="p-4">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <User className="w-4 h-4" />
+            <span className="truncate">{user?.email}</span>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              handleSignOut();
+              handleNavClick();
+            }}
+            className="w-full"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 };
