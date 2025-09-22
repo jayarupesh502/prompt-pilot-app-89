@@ -88,11 +88,20 @@ const ResumeBuilder: React.FC = () => {
         
         <div>
           {currentResume && (
-            <ResumePreview 
-              resume={currentResume.parsedContent}
-              atsScore={currentResume.atsScore}
-              isCalculatingATS={isCalculatingATS}
-            />
+            <div className="space-y-4">
+              <ResumePreview 
+                resume={currentResume.parsedContent}
+                atsScore={currentResume.atsScore}
+                isCalculatingATS={isCalculatingATS}
+              />
+              {!currentJob && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    📝 <strong>Next Step:</strong> Enter a job description on the left to get your job-specific ATS score!
+                  </p>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
