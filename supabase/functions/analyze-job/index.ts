@@ -1,0 +1,154 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { jobText, sourceUrl } = await req.json();
+
+    if (!jobText) {
+      throw new Error('Job description text is required');
+    }
+
+    console.log('Analyzing job description, length:', jobText.length);
+
+    // Use GPT-4o-mini to analyze and extract job requirements
+    const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a job description analyzer. Extract structured data and return ONLY valid JSON in this exact format:
+{
+  "title": "string",
+  "company": "string", 
+  "location": "string",
+  "requirements": {
+    "required_skills": ["string"],
+    "preferred_skills": ["string"],
+    "experience_years": "string",
+    "education": "string",
+    "certifications": ["string"]
+  },
+  "responsibilities": ["string"],
+  "keywords": ["string"],
+  "tech_stack": ["string"],
+  "industry": "string",
+  "employment_type": "string",
+  "salary_range": "string"
+}
+
+Focus on extracting:
+- All technical skills and technologies mentioned
+- Required vs preferred qualifications
+- Key action words and industry terms
+- Educational requirements
+- Experience level needed
+
+Return only the JSON, no other text.`
+          },
+          { role: 'user', content: `Analyze this job description:\n\n${jobText}` }
+        ],
+        max_tokens: 1500,
+        temperature: 0.2
+      }),
+    });
+
+    if (!analysisResponse.ok) {
+      throw new Error(`OpenAI API error: ${analysisResponse.statusText}`);
+    }
+
+    const analysisData = await analysisResponse.json();
+    const parsedContent = JSON.parse(analysisData.choices[0].message.content);
+
+    console.log('Analyzed job structure:', JSON.stringify(parsedContent, null, 2));
+
+    // Calculate keyword density and importance
+    const allKeywords = [
+      ...(parsedContent.requirements?.required_skills || []),
+      ...(parsedContent.requirements?.preferred_skills || []),
+      ...(parsedContent.tech_stack || []),
+      ...(parsedContent.keywords || [])
+    ];
+
+    // Create technology stack equivalence mapping
+    const techEquivalents = createTechStackMapping(parsedContent.tech_stack || []);
+
+    return new Response(JSON.stringify({
+      success: true,
+      parsedContent,
+      sourceUrl,
+      techEquivalents,
+      keywordCount: allKeywords.length,
+      analysisMetadata: {
+        extractedAt: new Date().toISOString(),
+        confidence: 0.85 // Could be calculated based on content quality
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in analyze-job function:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      success: false 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
+
+function createTechStackMapping(techStack: string[]): Record<string, string[]> {
+  const mappings: Record<string, string[]> = {};
+  
+  // Common technology equivalences
+  const equivalenceMap = {
+    'JavaScript': ['TypeScript', 'Node.js', 'React', 'Vue', 'Angular'],
+    'Python': ['Django', 'Flask', 'FastAPI', 'NumPy', 'Pandas'],
+    'Java': ['Spring', 'Spring Boot', 'Hibernate', 'Maven'],
+    'C#': ['.NET', '.NET Core', 'ASP.NET', 'Entity Framework'],
+    'React': ['Vue.js', 'Angular', 'Svelte', 'Next.js'],
+    'PostgreSQL': ['MySQL', 'SQL Server', 'Oracle', 'MongoDB'],
+    'AWS': ['Azure', 'Google Cloud', 'IBM Cloud'],
+    'Docker': ['Kubernetes', 'Podman', 'containerd'],
+    'Git': ['GitHub', 'GitLab', 'Bitbucket', 'SVN']
+  };
+
+  techStack.forEach(tech => {
+    const normalizedTech = tech.trim();
+    
+    // Find equivalents
+    for (const [key, equivalents] of Object.entries(equivalenceMap)) {
+      if (normalizedTech.toLowerCase().includes(key.toLowerCase()) || 
+          equivalents.some(eq => normalizedTech.toLowerCase().includes(eq.toLowerCase()))) {
+        mappings[normalizedTech] = [key, ...equivalents].filter(item => 
+          !item.toLowerCase().includes(normalizedTech.toLowerCase())
+        );
+      }
+    }
+    
+    if (!mappings[normalizedTech]) {
+      mappings[normalizedTech] = [];
+    }
+  });
+
+  return mappings;
+}

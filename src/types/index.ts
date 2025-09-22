@@ -50,6 +50,7 @@ export interface EducationItem {
   field?: string;
   startDate?: string;
   endDate?: string;
+  graduationDate?: string;
   gpa?: string;
 }
 
@@ -81,13 +82,19 @@ export interface ParsedJobDescription {
   title: string;
   company?: string;
   location?: string;
-  salary?: string;
-  requirements: string[];
+  employment_type?: string;
+  salary_range?: string;
+  industry?: string;
+  requirements: {
+    required_skills?: string[];
+    preferred_skills?: string[];
+    experience_years?: string;
+    education?: string;
+    certifications?: string[];
+  };
   responsibilities: string[];
-  skills: string[];
   keywords: string[];
-  experienceLevel?: string;
-  techStack: string[];
+  tech_stack: string[];
 }
 
 export interface JobDescription {
