@@ -67,7 +67,13 @@ serve(async (req) => {
 
     // Helper: validate if content is a resume using OpenAI
     async function validateIsResume(inputText: string): Promise<{ isResume: boolean; reason: string }> {
+      if (!openAIApiKey) {
+        console.log('No OpenAI API key available, skipping AI validation');
+        return { isResume: true, reason: "AI validation skipped - no API key" };
+      }
+
       try {
+        console.log('Making OpenAI validation request...');
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -101,23 +107,28 @@ Return ONLY a JSON object in this exact format:
           }),
         });
 
+        console.log('OpenAI validation response status:', res.status);
+
         if (res.ok) {
           const data = await res.json();
+          console.log('OpenAI validation response:', JSON.stringify(data).slice(0, 500));
           try {
-            return JSON.parse(data.choices[0].message.content);
+            const result = JSON.parse(data.choices[0].message.content);
+            console.log('Parsed validation result:', result);
+            return result;
           } catch (_e) {
-            return { isResume: false, reason: "Failed to validate document format" };
+            console.log('Failed to parse OpenAI response, defaulting to true');
+            return { isResume: true, reason: "Failed to parse AI response, assuming resume" };
           }
         } else {
           const bodyText = await res.text().catch(() => '');
           console.error('OpenAI resume validation failed:', res.status, bodyText);
+          return { isResume: true, reason: "AI validation failed, assuming resume" };
         }
         
-        return { isResume: false, reason: "Unable to validate document with AI" };
-        return { isResume: false, reason: "Unable to validate document with AI" };
       } catch (error) {
         console.error('Resume validation error:', error);
-        return { isResume: false, reason: "Validation service unavailable" };
+        return { isResume: true, reason: "Validation service error, assuming resume" };
       }
     }
 
@@ -333,11 +344,30 @@ Return ONLY a JSON object:
       const lower = input.toLowerCase();
       const hasEmail = /[\w.+-]+@\w+\.[\w.-]+/.test(input);
       const hasPhone = /\+?\d[\d\s().-]{7,}/.test(input);
-      const hasExperience = /(experience|work history|employment)/i.test(lower);
-      const hasEducationOrSkills = /(education)/i.test(lower) || /(skills|technical skills|technologies)/i.test(lower);
-      const bulletCount = (input.match(/(^|\n)\s*[-•·]/g) || []).length;
+      const hasExperience = /(experience|work|employment|job|position|role|developer|engineer|manager|analyst|coordinator|specialist|director|lead)/i.test(lower);
+      const hasEducation = /(education|university|college|bachelor|master|degree|diploma|certification|school)/i.test(lower);
+      const hasSkills = /(skills|technical|programming|software|tools|technologies|languages|frameworks)/i.test(lower);
+      const hasResumePhrases = /(resume|cv|curriculum vitae)/i.test(lower);
+      const hasActionWords = /(developed|managed|created|implemented|designed|built|led|coordinated|achieved|improved)/i.test(lower);
       const wordCount = input.trim().split(/\s+/).length;
-      return (hasEmail || hasPhone) && hasExperience && hasEducationOrSkills && wordCount > 150 && (bulletCount >= 3 || /\d{2,}/.test(input));
+      
+      console.log('Heuristic checks:', {
+        hasEmail,
+        hasPhone,
+        hasExperience,
+        hasEducation,
+        hasSkills,
+        hasResumePhrases,
+        hasActionWords,
+        wordCount
+      });
+      
+      // More lenient criteria - if it has contact info OR resume phrases AND some work-related content
+      const contactOrResumeIndicator = hasEmail || hasPhone || hasResumePhrases;
+      const workContent = hasExperience || hasActionWords;
+      const educationOrSkills = hasEducation || hasSkills;
+      
+      return contactOrResumeIndicator && workContent && wordCount > 100;
     }
 
     // First validate if this is actually a resume
