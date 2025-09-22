@@ -18,25 +18,28 @@ import {
 export const FeatureHighlights: React.FC = () => {
   const mainFeatures = [
     {
-      icon: <Brain className="w-6 h-6" />,
+      icon: <Brain className="w-8 h-8" />,
       title: "GPT-4o Powered Analysis",
       description: "Advanced AI understands job requirements and optimizes your resume accordingly",
       benefit: "85% higher callback rates",
-      color: "from-blue-500 to-cyan-500"
+      color: "from-blue-500 to-cyan-500",
+      gradient: "bg-gradient-to-br from-blue-50 to-cyan-50"
     },
     {
-      icon: <Target className="w-6 h-6" />,
+      icon: <Target className="w-8 h-8" />,
       title: "ATS Optimization Engine",
       description: "Beats Applicant Tracking Systems with keyword optimization and formatting",
       benefit: "Pass 95% of ATS filters",
-      color: "from-green-500 to-emerald-500"
+      color: "from-green-500 to-emerald-500",
+      gradient: "bg-gradient-to-br from-green-50 to-emerald-50"
     },
     {
-      icon: <Zap className="w-6 h-6" />,
+      icon: <Zap className="w-8 h-8" />,
       title: "Instant Resume Tailoring",
       description: "Transform your resume for any job in under 10 seconds",
       benefit: "Save 2+ hours per application",
-      color: "from-purple-500 to-pink-500"
+      color: "from-purple-500 to-pink-500",
+      gradient: "bg-gradient-to-br from-purple-50 to-pink-50"
     }
   ];
 
@@ -95,22 +98,31 @@ export const FeatureHighlights: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {mainFeatures.map((feature, index) => (
-            <Card key={index} className="group hover:shadow-2xl transition-all duration-500 border-0 bg-gradient-to-br from-background to-accent/5">
-              <CardContent className="p-8 space-y-6">
-                <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+            <Card 
+              key={index} 
+              className={`feature-card hover:shadow-2xl transition-all duration-500 border-0 ${feature.gradient} group cursor-pointer overflow-hidden relative`}
+              style={{animationDelay: `${index * 0.2}s`}}
+            >
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <CardContent className="p-8 space-y-6 relative z-10">
+                <div className={`w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br ${feature.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}>
                   {feature.icon}
                 </div>
                 
-                <div className="space-y-3">
-                  <h3 className="text-xl font-bold">{feature.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                <div className="space-y-4 text-center">
+                  <h3 className="text-2xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-600 leading-relaxed text-lg">
                     {feature.description}
                   </p>
                 </div>
                 
-                <div className="pt-4 border-t border-border/50">
-                  <Badge className={`bg-gradient-to-r ${feature.color} text-white`}>
-                    {feature.benefit}
+                <div className="pt-4">
+                  <Badge className={`bg-gradient-to-r ${feature.color} text-white text-base px-4 py-2 font-semibold mx-auto block w-fit group-hover:scale-105 transition-transform duration-300`}>
+                    ✨ {feature.benefit}
                   </Badge>
                 </div>
               </CardContent>
@@ -132,15 +144,23 @@ export const FeatureHighlights: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {supportingFeatures.map((feature, index) => (
-            <Card key={index} className="group hover:shadow-lg transition-all duration-300">
+            <Card 
+              key={index} 
+              className="premium-card hover:shadow-xl transition-all duration-500 group border-0 bg-white/80 backdrop-blur-sm hover:bg-white"
+              style={{animationDelay: `${index * 0.1}s`}}
+            >
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    {feature.icon}
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-variant rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg">
+                    <div className="text-white">
+                      {feature.icon}
+                    </div>
                   </div>
                   <div className="flex-1 space-y-2">
-                    <h4 className="font-semibold">{feature.title}</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <h4 className="font-bold text-lg text-gray-800 group-hover:text-primary transition-colors">
+                      {feature.title}
+                    </h4>
+                    <p className="text-gray-600 leading-relaxed">
                       {feature.description}
                     </p>
                   </div>

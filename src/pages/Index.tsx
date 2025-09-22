@@ -58,50 +58,67 @@ const Index = () => {
   }
 
   return (
-    <div className="space-y-16">
-      {/* Hero Section */}
-      <section className="text-center space-y-8">
-        <div className="space-y-4">
-          <Badge variant="outline" className="px-4 py-2">
-            <Sparkles className="w-4 h-4 mr-2" />
+    <div className="space-y-20">
+      {/* Enhanced Hero Section */}
+      <section className="relative text-center space-y-8 py-20 overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-background -z-10"></div>
+        
+        {/* Floating elements */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-primary/10 rounded-full blur-xl animate-float"></div>
+        <div className="absolute top-40 right-20 w-16 h-16 bg-accent/10 rounded-full blur-xl animate-float" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-primary-variant/10 rounded-full blur-xl animate-float" style={{animationDelay: '2s'}}></div>
+        
+        <div className="space-y-6 animate-fade-in">
+          <Badge variant="outline" className="px-6 py-3 text-base border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all duration-300 hover:scale-105">
+            <Sparkles className="w-5 h-5 mr-2 text-primary" />
             AI-Powered Resume Optimization
           </Badge>
-          <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+          
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
             Land More Interviews with{' '}
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="hero-gradient">
               AI-Tailored Resumes
             </span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
             PulpResume uses GPT-4o to instantly optimize your resume for any job description. 
             Get past ATS filters and impress recruiters with targeted, high-impact content.
           </p>
         </div>
         
-        <div className="flex items-center justify-center space-x-4">
-          <Button size="lg" className="btn-primary" onClick={handleTryAsGuest}>
-            <FileText className="w-5 h-5 mr-2" />
+        <div className="flex items-center justify-center space-x-6 animate-slide-up" style={{animationDelay: '0.3s'}}>
+          <Button 
+            size="lg" 
+            className="btn-primary text-lg px-8 py-4 hover:scale-105 transition-all duration-300" 
+            onClick={handleTryAsGuest}
+          >
+            <FileText className="w-6 h-6 mr-3" />
             Try as Guest
           </Button>
-          <Button size="lg" variant="outline" onClick={handleSignUp}>
+          <Button 
+            size="lg" 
+            variant="outline" 
+            className="text-lg px-8 py-4 border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 hover:scale-105 transition-all duration-300" 
+            onClick={handleSignUp}
+          >
             Sign Up Free
-            <ArrowRight className="w-5 h-5 ml-2" />
+            <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
         
-        <div className="flex items-center justify-center space-x-8 text-sm text-muted-foreground">
-          <div className="flex items-center">
-            <CheckCircle className="w-4 h-4 mr-2 text-accent" />
-            No Credit Card Required
-          </div>
-          <div className="flex items-center">
-            <CheckCircle className="w-4 h-4 mr-2 text-accent" />
-            7-Day Guest Access
-          </div>
-          <div className="flex items-center">
-            <CheckCircle className="w-4 h-4 mr-2 text-accent" />
-            3 Free Resumes
-          </div>
+        <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground animate-fade-in" style={{animationDelay: '0.6s'}}>
+          {[
+            { icon: CheckCircle, text: "No Credit Card Required" },
+            { icon: CheckCircle, text: "7-Day Guest Access" },
+            { icon: CheckCircle, text: "3 Free Resumes" }
+          ].map((item, index) => (
+            <div key={index} className="flex items-center space-x-2 hover:text-accent transition-colors duration-300">
+              <item.icon className="w-5 h-5 text-accent" />
+              <span>{item.text}</span>
+            </div>
+          ))}
         </div>
       </section>
 

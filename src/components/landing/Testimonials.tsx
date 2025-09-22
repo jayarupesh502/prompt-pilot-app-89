@@ -93,38 +93,48 @@ export const Testimonials: React.FC = () => {
   ];
 
   const TestimonialCard = ({ testimonial }: { testimonial: Testimonial }) => (
-    <Card className="h-full group hover:shadow-lg transition-all duration-300">
-      <CardContent className="p-6 space-y-4">
+    <Card className="h-full premium-card hover:shadow-2xl transition-all duration-500 group hover:scale-[1.02] overflow-hidden relative">
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      
+      <CardContent className="p-8 space-y-6 relative z-10">
         <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="text-2xl">{testimonial.avatar}</div>
+          <div className="flex items-center space-x-4">
+            <div className="text-4xl p-3 bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+              {testimonial.avatar}
+            </div>
             <div>
-              <h4 className="font-semibold">{testimonial.name}</h4>
-              <p className="text-sm text-muted-foreground">
-                {testimonial.role} at {testimonial.company}
+              <h4 className="font-bold text-lg text-gray-800 group-hover:text-primary transition-colors">
+                {testimonial.name}
+              </h4>
+              <p className="text-gray-600 font-medium">
+                {testimonial.role}
+              </p>
+              <p className="text-sm text-gray-500">
+                at {testimonial.company}
               </p>
             </div>
           </div>
           <div className="flex">
             {Array.from({ length: testimonial.rating }).map((_, i) => (
-              <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400 group-hover:scale-110 transition-transform duration-300" style={{transitionDelay: `${i * 0.1}s`}} />
             ))}
           </div>
         </div>
         
         <div className="relative">
-          <Quote className="w-6 h-6 text-primary/20 absolute -top-2 -left-1" />
-          <p className="text-sm leading-relaxed pl-6">
-            {testimonial.content}
+          <Quote className="w-8 h-8 text-primary/30 absolute -top-3 -left-2" />
+          <p className="text-gray-700 leading-relaxed pl-8 text-lg italic">
+            "{testimonial.content}"
           </p>
         </div>
         
-        <div className="flex items-center justify-between pt-4 border-t border-border/50">
-          <Badge variant="outline" className="text-xs">
+        <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+          <Badge variant="outline" className="text-sm px-3 py-1 border-gray-300">
             {testimonial.industry}
           </Badge>
-          <Badge className="bg-green-100 text-green-700 text-xs">
-            {testimonial.improvement}
+          <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm px-3 py-1 font-semibold">
+            ✨ {testimonial.improvement}
           </Badge>
         </div>
       </CardContent>
