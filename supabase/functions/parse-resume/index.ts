@@ -440,28 +440,26 @@ Return ONLY a JSON object:
     console.log('Validating if content is a resume...');
     const validation = await validateIsResume(text);
 
-    let proceedAsResume = validation.isResume;
-    if (!proceedAsResume) {
-      // Fallback to heuristic detection if AI validation fails
+    // Always proceed, but annotate confidence so the UI can warn nicely
+    let validationInfo = {
+      aiIsResume: validation.isResume,
+      reason: validation.reason,
+      heuristicGuess: false,
+      lowConfidence: false,
+    };
+
+    let proceedAsResume = true;
+    if (!validation.isResume) {
+      // Try heuristic detection and mark low confidence if it also fails
       const heuristicGuess = isLikelyResume(text);
-      if (!heuristicGuess) {
-        console.log('File is not a resume:', validation.reason);
-        return new Response(JSON.stringify({
-          success: false,
-          error: 'This file does not appear to be a resume.',
-          reason: validation.reason || 'Heuristic checks failed',
-          suggestion: 'Please upload a document that contains work experience, education, and contact information.',
-          diagnostics: { heuristic: true }
-        }), {
-          status: 200, // return 200 so the client can show a friendly message
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      proceedAsResume = true;
-      console.log('AI validation failed, but heuristic detection indicates a resume. Proceeding...');
+      validationInfo.heuristicGuess = heuristicGuess;
+      validationInfo.lowConfidence = !heuristicGuess;
+      console.log('AI validation failed; proceeding with', heuristicGuess ? 'heuristic pass' : 'low confidence (forcing proceed)');
+    } else {
+      validationInfo.heuristicGuess = true;
     }
 
-    console.log('File validated as resume, proceeding with parsing...');
+    console.log('File validated (forced proceed), continuing with parsing...');
 
     // Try OpenAI first, then fallback
     let parsedContent = await callOpenAIWithRetry(text);
@@ -505,7 +503,8 @@ Return ONLY a JSON object:
       success: true,
       parsedContent,
       atsScore,
-      originalFilename: file.name
+      originalFilename: file.name,
+      validation: validationInfo
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
