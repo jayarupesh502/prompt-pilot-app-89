@@ -474,10 +474,28 @@ Return ONLY a JSON object:
     // First validate if this is actually a resume
     console.log('Validating if content is a resume...');
     const validation = await validateIsResume(text);
-
     const heuristicGuess = isLikelyResume(text);
 
-    // Soft validation: never block the flow; attach diagnostics instead
+    let proceedAsResume = validation.isResume;
+    if (!proceedAsResume) {
+      // Fallback to heuristic detection if AI validation fails
+      if (!heuristicGuess) {
+        console.log('File is not a resume:', validation.reason);
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'This file does not appear to be a resume.',
+          reason: validation.reason || 'Heuristic checks failed',
+          suggestion: 'Please upload a document that contains work experience, education, and contact information.',
+          diagnostics: { heuristic: true }
+        }), {
+          status: 200, // return 200 so the client can show a friendly message
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      proceedAsResume = true;
+      console.log('AI validation failed, but heuristic detection indicates a resume. Proceeding...');
+    }
+
     const validationMeta = {
       aiValidated: validation.reason !== 'AI validation skipped - no API key',
       aiIsResume: validation.isResume,
@@ -485,14 +503,9 @@ Return ONLY a JSON object:
       heuristicGuess,
     };
 
-    if (!validation.isResume && !heuristicGuess) {
-      console.log('Proceeding with soft acceptance: low confidence resume, continuing as per UX requirement');
-    } else {
-      console.log('File validated as resume (soft). Proceeding with parsing...');
-    }
+    console.log('File validated as resume, proceeding with parsing...');
 
-    // Proceed with parsing regardless (soft acceptance)
-
+    // Proceed with parsing
     // Try OpenAI first, then fallback
     let parsedContent = await callOpenAIWithRetry(text);
     if (!parsedContent) {
