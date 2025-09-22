@@ -72,11 +72,20 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
       }
 
       // Call parse-resume edge function
-      const { data, error } = await supabase.functions.invoke('parse-resume', {
+      const response = await supabase.functions.invoke('parse-resume', {
         body: formData
       });
 
-      if (error) throw error;
+      // Handle both error cases and validation failures
+      if (response.error) {
+        throw new Error("File validation failed. Please ensure you're uploading a resume with work experience, education, and contact information.");
+      }
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || response.data?.reason || "File validation failed");
+      }
+
+      const data = response.data;
 
       if (!data.success) {
         // Handle specific validation errors for non-resume files
