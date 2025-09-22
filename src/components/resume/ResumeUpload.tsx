@@ -29,18 +29,22 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
     const file = acceptedFiles[0];
     if (!file) return;
 
-    // Validate file type
+    // Validate file type with fallback to extension
     const allowedTypes = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/msword',
-      'text/plain'
+      'text/plain',
+      'text/rtf',
+      'application/rtf'
     ];
+    const allowedExts = new Set(['pdf', 'docx', 'doc', 'txt', 'rtf']);
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
 
-    if (!allowedTypes.includes(file.type)) {
+    if (!(allowedTypes.includes(file.type) || allowedExts.has(ext))) {
       toast({
         title: "Unsupported file type",
-        description: "Please upload a PDF, DOCX, or TXT file.",
+        description: "Please upload a PDF, DOCX, DOC, TXT, or RTF file.",
         variant: "destructive"
       });
       return;
@@ -109,7 +113,11 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
 
       // Call both callbacks for compatibility
       onUploadComplete?.(newResume);
-      onUploadSuccess?.(newResume);
+      onUploadSuccess?.({
+        ...newResume,
+        parsed_content: newResume.parsedContent,
+        ats_score: newResume.atsScore,
+      });
 
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -123,16 +131,19 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
     }
   }, [toast, isGuest, guestSessionId, createResume, onUploadComplete, onUploadSuccess]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'application/msword': ['.doc'],
-      'text/plain': ['.txt']
+      'text/plain': ['.txt'],
+      'text/rtf': ['.rtf'],
+      'application/rtf': ['.rtf']
     },
     multiple: false,
-    disabled: isUploading
+    disabled: isUploading,
+    noClick: true,
   });
 
   return (
@@ -170,7 +181,7 @@ export const ResumeUpload: React.FC<ResumeUploadProps> = ({
             </div>
 
             {!isDragActive && !isUploading && (
-              <Button variant="outline" className="mt-4">
+              <Button variant="outline" className="mt-4" onClick={() => open()}>
                 <FileText className="w-4 h-4 mr-2" />
                 Browse Files
               </Button>
