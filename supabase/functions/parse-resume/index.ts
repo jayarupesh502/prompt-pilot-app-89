@@ -108,8 +108,12 @@ Return ONLY a JSON object in this exact format:
           } catch (_e) {
             return { isResume: false, reason: "Failed to validate document format" };
           }
+        } else {
+          const bodyText = await res.text().catch(() => '');
+          console.error('OpenAI resume validation failed:', res.status, bodyText);
         }
         
+        return { isResume: false, reason: "Unable to validate document with AI" };
         return { isResume: false, reason: "Unable to validate document with AI" };
       } catch (error) {
         console.error('Resume validation error:', error);
@@ -324,21 +328,41 @@ Return ONLY a JSON object:
       };
     }
 
+    // Heuristic resume detector as fallback when AI validation fails
+    function isLikelyResume(input: string): boolean {
+      const lower = input.toLowerCase();
+      const hasEmail = /[\w.+-]+@\w+\.[\w.-]+/.test(input);
+      const hasPhone = /\+?\d[\d\s().-]{7,}/.test(input);
+      const hasExperience = /(experience|work history|employment)/i.test(lower);
+      const hasEducationOrSkills = /(education)/i.test(lower) || /(skills|technical skills|technologies)/i.test(lower);
+      const bulletCount = (input.match(/(^|\n)\s*[-•·]/g) || []).length;
+      const wordCount = input.trim().split(/\s+/).length;
+      return (hasEmail || hasPhone) && hasExperience && hasEducationOrSkills && wordCount > 150 && (bulletCount >= 3 || /\d{2,}/.test(input));
+    }
+
     // First validate if this is actually a resume
     console.log('Validating if content is a resume...');
     const validation = await validateIsResume(text);
-    
-    if (!validation.isResume) {
-      console.log('File is not a resume:', validation.reason);
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'This file does not appear to be a resume.',
-        reason: validation.reason,
-        suggestion: 'Please upload a document that contains work experience, education, and contact information.'
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+
+    let proceedAsResume = validation.isResume;
+    if (!proceedAsResume) {
+      // Fallback to heuristic detection if AI validation fails
+      const heuristicGuess = isLikelyResume(text);
+      if (!heuristicGuess) {
+        console.log('File is not a resume:', validation.reason);
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'This file does not appear to be a resume.',
+          reason: validation.reason || 'Heuristic checks failed',
+          suggestion: 'Please upload a document that contains work experience, education, and contact information.',
+          diagnostics: { heuristic: true }
+        }), {
+          status: 200, // return 200 so the client can show a friendly message
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      proceedAsResume = true;
+      console.log('AI validation failed, but heuristic detection indicates a resume. Proceeding...');
     }
 
     console.log('File validated as resume, proceeding with parsing...');
