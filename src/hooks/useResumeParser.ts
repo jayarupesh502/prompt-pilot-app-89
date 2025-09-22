@@ -72,7 +72,7 @@ export const useResumeParser = () => {
     try {
       const { data, error: functionError } = await supabase.functions.invoke('analyze-job', {
         body: {
-          jobDescription: jobText,
+          jobText,
           sourceUrl,
           userId: user?.id,
           isGuest,

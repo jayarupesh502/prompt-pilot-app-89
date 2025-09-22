@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +8,8 @@ const corsHeaders = {
 };
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -14,7 +17,7 @@ serve(async (req) => {
   }
 
   try {
-    const { jobText, sourceUrl } = await req.json();
+    const { jobText, sourceUrl, userId, isGuest, guestSessionId } = await req.json();
 
     if (!jobText) {
       throw new Error('Job description text is required');
@@ -103,8 +106,48 @@ Return only the JSON, no other text.`
     // Create technology stack equivalence mapping
     const techEquivalents = createTechStackMapping(parsedContent.tech_stack || []);
 
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Save job description to database
+    let jobDescriptionData = null;
+    try {
+      const jobDescriptionRecord = {
+        title: parsedContent.title || 'Job Position',
+        company: parsedContent.company || '',
+        raw_content: jobText,
+        parsed_content: parsedContent,
+        source_url: sourceUrl || null,
+        tech_stack: parsedContent.tech_stack || [],
+        required_skills: parsedContent.requirements?.required_skills || [],
+        keywords: allKeywords,
+        user_id: isGuest ? null : userId,
+        is_guest: isGuest || false,
+        guest_session_id: isGuest ? guestSessionId : null,
+        expires_at: isGuest ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null // 7 days for guests
+      };
+
+      const { data: savedJob, error: saveError } = await supabase
+        .from('job_descriptions')
+        .insert(jobDescriptionRecord)
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error('Error saving job description:', saveError);
+        // Continue without failing the entire request
+      } else {
+        jobDescriptionData = savedJob;
+        console.log('Job description saved with ID:', savedJob.id);
+      }
+    } catch (saveError) {
+      console.error('Unexpected error saving job description:', saveError);
+      // Continue without failing the entire request
+    }
+
     return new Response(JSON.stringify({
       success: true,
+      jobDescription: jobDescriptionData,
       parsedContent,
       sourceUrl,
       techEquivalents,
