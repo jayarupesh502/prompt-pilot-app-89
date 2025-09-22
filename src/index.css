@@ -19,11 +19,11 @@
     --accent-variant: 142 69% 42%; /* Light Green */
     --accent-foreground: 0 0% 98%;
     
-    --muted: 217 20% 95%; /* Sophisticated Gray */
-    --muted-foreground: 215 16% 47%;
+    --muted: 142 76% 96%; /* Light Green Gray */
+    --muted-foreground: 142 16% 47%;
     
-    --background: 220 13% 18%; /* Dark Charcoal */
-    --foreground: 217 19% 12%;
+    --background: 0 0% 100%; /* Pure White */
+    --foreground: 0 0% 9%;
     
     --card: 0 0% 100%;
     --card-foreground: 217 19% 12%;
@@ -40,11 +40,11 @@
     
     /* Luxury gradients */
     --gradient-hero: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(0 0% 15%) 25%, hsl(142 76% 36%) 75%, hsl(142 69% 42%) 100%);
-    --gradient-sophisticated: linear-gradient(145deg, hsl(220 13% 20%) 0%, hsl(220 13% 18%) 50%, hsl(220 13% 16%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(220 13% 22%) 0%, hsl(220 13% 20%) 100%);
+    --gradient-sophisticated: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(142 76% 96%) 50%, hsl(0 0% 98%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(142 76% 98%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 69% 42%));
     --gradient-primary: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 15%));
-    --gradient-luxury: radial-gradient(ellipse at top, hsl(220 13% 20%) 0%, hsl(220 13% 18%) 50%, hsl(220 13% 16%) 100%);
+    --gradient-luxury: radial-gradient(ellipse at top, hsl(0 0% 100%) 0%, hsl(142 76% 98%) 50%, hsl(0 0% 96%) 100%);
     
     /* Premium shadows */
     --shadow-sm: 0 1px 3px 0 hsl(217 19% 27% / 0.1);
