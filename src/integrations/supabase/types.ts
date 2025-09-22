@@ -22,9 +22,12 @@ export type Database = {
           guest_session_id: string | null
           id: string
           is_guest: boolean | null
+          keywords: string[] | null
           parsed_content: Json
           raw_content: string
+          required_skills: string[] | null
           source_url: string | null
+          tech_stack: string[] | null
           title: string
           user_id: string | null
         }
@@ -35,9 +38,12 @@ export type Database = {
           guest_session_id?: string | null
           id?: string
           is_guest?: boolean | null
+          keywords?: string[] | null
           parsed_content: Json
           raw_content: string
+          required_skills?: string[] | null
           source_url?: string | null
+          tech_stack?: string[] | null
           title: string
           user_id?: string | null
         }
@@ -48,9 +54,12 @@ export type Database = {
           guest_session_id?: string | null
           id?: string
           is_guest?: boolean | null
+          keywords?: string[] | null
           parsed_content?: Json
           raw_content?: string
+          required_skills?: string[] | null
           source_url?: string | null
+          tech_stack?: string[] | null
           title?: string
           user_id?: string | null
         }
@@ -141,6 +150,8 @@ export type Database = {
           ats_score: number | null
           created_at: string
           expires_at: string | null
+          file_type: string | null
+          file_url: string | null
           guest_session_id: string | null
           id: string
           is_guest: boolean | null
@@ -154,6 +165,8 @@ export type Database = {
           ats_score?: number | null
           created_at?: string
           expires_at?: string | null
+          file_type?: string | null
+          file_url?: string | null
           guest_session_id?: string | null
           id?: string
           is_guest?: boolean | null
@@ -167,6 +180,8 @@ export type Database = {
           ats_score?: number | null
           created_at?: string
           expires_at?: string | null
+          file_type?: string | null
+          file_url?: string | null
           guest_session_id?: string | null
           id?: string
           is_guest?: boolean | null
