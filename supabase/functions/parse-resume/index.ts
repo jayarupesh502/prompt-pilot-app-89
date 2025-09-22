@@ -117,18 +117,18 @@ Return ONLY a JSON object in this exact format:
             console.log('Parsed validation result:', result);
             return result;
           } catch (_e) {
-            console.log('Failed to parse OpenAI response, defaulting to true');
-            return { isResume: true, reason: "Failed to parse AI response, assuming resume" };
+            console.log('Failed to parse OpenAI response, defaulting to heuristic later');
+            return { isResume: false, reason: "Failed to parse AI response" };
           }
         } else {
           const bodyText = await res.text().catch(() => '');
           console.error('OpenAI resume validation failed:', res.status, bodyText);
-          return { isResume: true, reason: "AI validation failed, assuming resume" };
+          return { isResume: false, reason: "AI validation failed" };
         }
         
       } catch (error) {
         console.error('Resume validation error:', error);
-        return { isResume: true, reason: "Validation service error, assuming resume" };
+        return { isResume: false, reason: "Validation service error" };
       }
     }
 
@@ -252,10 +252,10 @@ Return ONLY a JSON object:
   "improvements": ["string"]
 }`
                 },
-                { 
-                  role: 'user', 
-                  content: `Analyze this resume for ATS compatibility:\n\nStructured Data: ${JSON.stringify(resumeContent)}\n\nRaw Text: ${rawText.slice(0, 1500)}` 
-                }
+              { 
+                role: 'user', 
+                content: `Analyze this resume for ATS compatibility:\n\nStructured Data: ${JSON.stringify(resumeContent)}\n\nRaw Text (first 4000 chars): ${rawText.slice(0, 4000)}` 
+              }
               ],
               max_tokens: 500,
               temperature: 0.1
@@ -404,7 +404,16 @@ Return ONLY a JSON object:
       const hasSkills = /(skills|technical|programming|software|tools|technologies|languages|frameworks)/i.test(lower);
       const hasResumePhrases = /(resume|cv|curriculum vitae)/i.test(lower);
       const hasActionWords = /(developed|managed|created|implemented|designed|built|led|coordinated|achieved|improved)/i.test(lower);
+      const hasDateRanges = /(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s?\d{4}\s*[-–]\s*(present|\w+\.?\s?\d{4})|\b\d{4}\s*[-–]\s*(present|\d{4})/i.test(lower);
+      const bulletCount = (input.match(/(^|\n)\s*[-•·]/g) || []).length;
       const wordCount = input.trim().split(/\s+/).length;
+      const disqualifiers = /(withholding|\bw-?4\b|internal revenue service|irs|tax|certificate|form\s?\d+|schedule\s?[a-z0-9]+|department of the treasury|invoice|purchase order|terms and conditions|privacy policy|cookie policy|table of contents|application form)/i;
+
+      // Hard disqualify common government/tax/invoice forms unless strong resume signals exist
+      if (disqualifiers.test(lower) && !(hasExperience && (hasEducation || hasSkills))) {
+        console.log('Heuristic disqualified by form-like keywords');
+        return false;
+      }
       
       console.log('Heuristic checks:', {
         hasEmail,
@@ -414,15 +423,17 @@ Return ONLY a JSON object:
         hasSkills,
         hasResumePhrases,
         hasActionWords,
+        hasDateRanges,
+        bulletCount,
         wordCount
       });
       
-      // More lenient criteria - if it has contact info OR resume phrases AND some work-related content
       const contactOrResumeIndicator = hasEmail || hasPhone || hasResumePhrases;
-      const workContent = hasExperience || hasActionWords;
+      const workContent = hasExperience || hasActionWords || hasDateRanges;
       const educationOrSkills = hasEducation || hasSkills;
+      const structureSignals = bulletCount >= 2;
       
-      return contactOrResumeIndicator && workContent && wordCount > 100;
+      return contactOrResumeIndicator && workContent && educationOrSkills && (structureSignals || wordCount > 140);
     }
 
     // First validate if this is actually a resume
