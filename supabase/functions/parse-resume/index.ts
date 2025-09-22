@@ -335,6 +335,19 @@ Return ONLY a JSON object:
     function heuristicParse(input: string) {
       const lines = input.split(/\r?\n/).map(l => l.trim()).filter(Boolean).slice(0, 1500);
       const textLower = input.toLowerCase();
+      
+      // If this doesn't look like a resume at all, return minimal structure
+      if (!isLikelyResume(input)) {
+        console.log('Heuristic parser: File does not appear to be a resume, returning minimal structure');
+        return {
+          profile: { name: '', email: '', phone: '', location: '', summary: 'This file does not appear to be a resume. Please upload a proper resume document.' },
+          experience: [],
+          education: [],
+          skills: [],
+          projects: []
+        };
+      }
+
       const section = (name: string) => new RegExp(`(^|\n)\s*${name}\s*:?.*$`, 'i');
 
       const splitBy = (marker: RegExp) => {
@@ -347,38 +360,72 @@ Return ONLY a JSON object:
       const skillsMarkers = [/skills/, /technical skills/, /technologies/];
       const projectsMarkers = [/projects?,?/];
 
-      const bulletsFrom = (arr: string[]) => arr.filter(l => /^[-•·]/.test(l) || l.length > 40).slice(0, 10);
+      // Better bullet extraction - avoid dumping entire raw text
+      const bulletsFrom = (arr: string[]) => {
+        return arr
+          .filter(l => /^[-•·]/.test(l) || (l.length > 20 && l.length < 200 && !/^(john doe|email:|phone:|location:)/i.test(l)))
+          .map(l => l.replace(/^[-•·]\s*/, '').trim())
+          .filter(l => l.length > 10)
+          .slice(0, 8);
+      };
 
       const experience = (() => {
         const marker = expMarkers.find(m => m.test(textLower));
-        const arr = marker ? splitBy(section(marker.source.replace(/\\/g, ''))) : lines;
+        const arr = marker ? splitBy(section(marker.source.replace(/\\/g, ''))) : [];
         const bullets = bulletsFrom(arr);
-        return bullets.length
-          ? [{ company: '', title: '', location: '', startDate: '', endDate: '', bullets, skills: [] }]
-          : [];
+        
+        if (bullets.length > 0) {
+          // Try to extract company and title from context
+          const companyMatch = arr.find(l => /\b(inc|corp|llc|ltd|company|technologies|systems)\b/i.test(l));
+          const titleMatch = arr.find(l => /(engineer|developer|manager|analyst|coordinator|specialist|director|lead)/i.test(l));
+          
+          return [{
+            company: companyMatch?.replace(/\|.*/, '').trim().slice(0, 50) || '',
+            title: titleMatch?.replace(/\|.*/, '').trim().slice(0, 50) || '',
+            location: '',
+            startDate: '',
+            endDate: '',
+            bullets,
+            skills: []
+          }];
+        }
+        return [];
       })();
 
       const education = (() => {
         const marker = eduMarkers.find(m => m.test(textLower));
         const arr = marker ? splitBy(section(marker.source.replace(/\\/g, ''))) : [];
         const item = arr.find(l => /(university|college|bachelor|master|degree)/i.test(l));
-        return item ? [{ institution: item, degree: '', field: '', graduationDate: '', gpa: '' }] : [];
+        return item ? [{ 
+          institution: item.slice(0, 100), 
+          degree: '', 
+          field: '', 
+          graduationDate: '', 
+          gpa: '' 
+        }] : [];
       })();
 
       const skills = (() => {
         const marker = skillsMarkers.find(m => m.test(textLower));
         const arr = marker ? splitBy(section(marker.source.replace(/\\/g, ''))) : [];
-        const joined = arr.slice(0, 10).join(', ');
-        return joined.split(/,|\u2022|\|/).map(s => s.trim()).filter(s => s && s.length < 30).slice(0, 30);
+        const joined = arr.slice(0, 5).join(', ');
+        return joined
+          .split(/,|\u2022|\|/)
+          .map(s => s.trim())
+          .filter(s => s && s.length > 2 && s.length < 30)
+          .slice(0, 20);
       })();
 
       const projects = (() => {
         const marker = projectsMarkers.find(m => m.test(textLower));
         const arr = marker ? splitBy(section(marker.source.replace(/\\/g, ''))) : [];
         const bullets = bulletsFrom(arr);
-        return bullets.length
-          ? [{ name: '', description: '', technologies: [], bullets }]
-          : [];
+        return bullets.length > 0 ? [{ 
+          name: '', 
+          description: '', 
+          technologies: [], 
+          bullets 
+        }] : [];
       })();
 
       // Basic profile extraction
@@ -407,12 +454,17 @@ Return ONLY a JSON object:
       const hasDateRanges = /(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s?\d{4}\s*[-–]\s*(present|\w+\.?\s?\d{4})|\b\d{4}\s*[-–]\s*(present|\d{4})/i.test(lower);
       const bulletCount = (input.match(/(^|\n)\s*[-•·]/g) || []).length;
       const wordCount = input.trim().split(/\s+/).length;
-      const disqualifiers = /(withholding|\bw-?4\b|internal revenue service|irs|tax|certificate|form\s?\d+|schedule\s?[a-z0-9]+|department of the treasury|invoice|purchase order|terms and conditions|privacy policy|cookie policy|table of contents|application form)/i;
-
-      // Hard disqualify common government/tax/invoice forms unless strong resume signals exist
-      if (disqualifiers.test(lower) && !(hasExperience && (hasEducation || hasSkills))) {
-        console.log('Heuristic disqualified by form-like keywords');
-        return false;
+      
+      // Strong disqualifiers for forms, documents that are definitely not resumes
+      const strongDisqualifiers = /(withholding|\bw-?4\b|w-4|internal revenue service|irs|tax return|tax form|certificate|form\s?\d+|schedule\s?[a-z0-9]+|department of the treasury|invoice|purchase order|terms and conditions|privacy policy|cookie policy|table of contents|application form|i-9|i94|immigration|customs|border protection)/i;
+      
+      // If it's clearly a form/document and lacks resume indicators, reject it
+      if (strongDisqualifiers.test(lower)) {
+        const strongResumeSignals = hasResumePhrases || (hasExperience && hasEducation && hasSkills);
+        if (!strongResumeSignals) {
+          console.log('Heuristic disqualified by form-like keywords:', lower.match(strongDisqualifiers)?.[0]);
+          return false;
+        }
       }
       
       console.log('Heuristic checks:', {
@@ -440,26 +492,35 @@ Return ONLY a JSON object:
     console.log('Validating if content is a resume...');
     const validation = await validateIsResume(text);
 
-    // Always proceed, but annotate confidence so the UI can warn nicely
+    // Check if we should proceed with parsing
+    const heuristicGuess = isLikelyResume(text);
+    
+    if (!validation.isResume && !heuristicGuess) {
+      console.log('File rejected: Both AI and heuristic validation failed');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'This file does not appear to be a resume or CV.',
+        reason: validation.reason || 'File appears to be a form, document, or other non-resume content.',
+        suggestion: 'Please upload a document that contains work experience, education, and contact information.',
+        diagnostics: { 
+          aiValidation: validation.isResume,
+          heuristicValidation: heuristicGuess,
+          aiReason: validation.reason
+        }
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     let validationInfo = {
       aiIsResume: validation.isResume,
       reason: validation.reason,
-      heuristicGuess: false,
-      lowConfidence: false,
+      heuristicGuess,
+      lowConfidence: !validation.isResume && heuristicGuess,
     };
 
-    let proceedAsResume = true;
-    if (!validation.isResume) {
-      // Try heuristic detection and mark low confidence if it also fails
-      const heuristicGuess = isLikelyResume(text);
-      validationInfo.heuristicGuess = heuristicGuess;
-      validationInfo.lowConfidence = !heuristicGuess;
-      console.log('AI validation failed; proceeding with', heuristicGuess ? 'heuristic pass' : 'low confidence (forcing proceed)');
-    } else {
-      validationInfo.heuristicGuess = true;
-    }
-
-    console.log('File validated (forced proceed), continuing with parsing...');
+    console.log('File validated, continuing with parsing...');
 
     // Try OpenAI first, then fallback
     let parsedContent = await callOpenAIWithRetry(text);
